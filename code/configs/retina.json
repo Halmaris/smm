@@ -1,0 +1,717 @@
+{
+  "version": 2,
+  "budget": 100,
+  "seed": 20261008,
+  "optuna_version": "4.5.0",
+  "jobs": [
+    {
+      "dataset": "RetinaMNIST",
+      "method": "linear_svm",
+      "seed": 20261009,
+      "inner_folds": 5,
+      "id": "RetinaMNIST__linear_svm"
+    },
+    {
+      "dataset": "RetinaMNIST",
+      "method": "smm",
+      "seed": 20261010,
+      "inner_folds": 5,
+      "id": "RetinaMNIST__smm"
+    },
+    {
+      "dataset": "RetinaMNIST",
+      "method": "spatial_svm",
+      "seed": 20261011,
+      "inner_folds": 5,
+      "id": "RetinaMNIST__spatial_svm"
+    },
+    {
+      "dataset": "RetinaMNIST",
+      "method": "spatial_smm",
+      "seed": 20261012,
+      "inner_folds": 5,
+      "id": "RetinaMNIST__spatial_smm"
+    },
+    {
+      "dataset": "RetinaMNIST",
+      "method": "crammer_singer",
+      "seed": 20261013,
+      "inner_folds": 5,
+      "id": "RetinaMNIST__crammer_singer"
+    },
+    {
+      "dataset": "RetinaMNIST",
+      "method": "msmm",
+      "seed": 20261014,
+      "inner_folds": 5,
+      "id": "RetinaMNIST__msmm"
+    },
+    {
+      "dataset": "RetinaMNIST",
+      "method": "rbf_svm",
+      "seed": 20261015,
+      "inner_folds": 5,
+      "id": "RetinaMNIST__rbf_svm"
+    },
+    {
+      "dataset": "RetinaMNIST",
+      "method": "shrinkage_lda",
+      "seed": 20261016,
+      "inner_folds": 5,
+      "id": "RetinaMNIST__shrinkage_lda"
+    },
+    {
+      "dataset": "RetinaMNIST",
+      "method": "separable_lda",
+      "seed": 20261017,
+      "inner_folds": 5,
+      "id": "RetinaMNIST__separable_lda"
+    }
+  ],
+  "anchors": {
+    "templates": {
+      "grid1": [
+        {
+          "Cbar": 0.1,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 1,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 10,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 100,
+          "tau": 0,
+          "gamma": 0
+        }
+      ],
+      "grid2": [
+        {
+          "Cbar": 0.1,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 0.1,
+          "tau": 0.1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 0.1,
+          "tau": 1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 1,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 1,
+          "tau": 0.1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 1,
+          "tau": 1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 10,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 10,
+          "tau": 0.1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 10,
+          "tau": 1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 100,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 100,
+          "tau": 0.1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 100,
+          "tau": 1,
+          "gamma": 0
+        }
+      ],
+      "grid3": [
+        {
+          "Cbar": 0.1,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 0.1,
+          "tau": 0,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 0.1,
+          "tau": 0,
+          "gamma": 1
+        },
+        {
+          "Cbar": 1,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 1,
+          "tau": 0,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 1,
+          "tau": 0,
+          "gamma": 1
+        },
+        {
+          "Cbar": 10,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 10,
+          "tau": 0,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 10,
+          "tau": 0,
+          "gamma": 1
+        },
+        {
+          "Cbar": 100,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 100,
+          "tau": 0,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 100,
+          "tau": 0,
+          "gamma": 1
+        }
+      ],
+      "grid4": [
+        {
+          "Cbar": 0.1,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 0.1,
+          "tau": 0,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 0.1,
+          "tau": 0,
+          "gamma": 1
+        },
+        {
+          "Cbar": 0.1,
+          "tau": 0.1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 0.1,
+          "tau": 0.1,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 0.1,
+          "tau": 0.1,
+          "gamma": 1
+        },
+        {
+          "Cbar": 0.1,
+          "tau": 1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 0.1,
+          "tau": 1,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 0.1,
+          "tau": 1,
+          "gamma": 1
+        },
+        {
+          "Cbar": 1,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 1,
+          "tau": 0,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 1,
+          "tau": 0,
+          "gamma": 1
+        },
+        {
+          "Cbar": 1,
+          "tau": 0.1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 1,
+          "tau": 0.1,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 1,
+          "tau": 0.1,
+          "gamma": 1
+        },
+        {
+          "Cbar": 1,
+          "tau": 1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 1,
+          "tau": 1,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 1,
+          "tau": 1,
+          "gamma": 1
+        },
+        {
+          "Cbar": 10,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 10,
+          "tau": 0,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 10,
+          "tau": 0,
+          "gamma": 1
+        },
+        {
+          "Cbar": 10,
+          "tau": 0.1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 10,
+          "tau": 0.1,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 10,
+          "tau": 0.1,
+          "gamma": 1
+        },
+        {
+          "Cbar": 10,
+          "tau": 1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 10,
+          "tau": 1,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 10,
+          "tau": 1,
+          "gamma": 1
+        },
+        {
+          "Cbar": 100,
+          "tau": 0,
+          "gamma": 0
+        },
+        {
+          "Cbar": 100,
+          "tau": 0,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 100,
+          "tau": 0,
+          "gamma": 1
+        },
+        {
+          "Cbar": 100,
+          "tau": 0.1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 100,
+          "tau": 0.1,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 100,
+          "tau": 0.1,
+          "gamma": 1
+        },
+        {
+          "Cbar": 100,
+          "tau": 1,
+          "gamma": 0
+        },
+        {
+          "Cbar": 100,
+          "tau": 1,
+          "gamma": 0.1
+        },
+        {
+          "Cbar": 100,
+          "tau": 1,
+          "gamma": 1
+        }
+      ],
+      "grid5": [
+        {
+          "Cbar": 0.1,
+          "tau": 0
+        },
+        {
+          "Cbar": 1,
+          "tau": 0
+        },
+        {
+          "Cbar": 10,
+          "tau": 0
+        },
+        {
+          "Cbar": 100,
+          "tau": 0
+        }
+      ],
+      "grid6": [
+        {
+          "Cbar": 0.1,
+          "tau": 0
+        },
+        {
+          "Cbar": 0.1,
+          "tau": 0.1
+        },
+        {
+          "Cbar": 0.1,
+          "tau": 1
+        },
+        {
+          "Cbar": 1,
+          "tau": 0
+        },
+        {
+          "Cbar": 1,
+          "tau": 0.1
+        },
+        {
+          "Cbar": 1,
+          "tau": 1
+        },
+        {
+          "Cbar": 10,
+          "tau": 0
+        },
+        {
+          "Cbar": 10,
+          "tau": 0.1
+        },
+        {
+          "Cbar": 10,
+          "tau": 1
+        },
+        {
+          "Cbar": 100,
+          "tau": 0
+        },
+        {
+          "Cbar": 100,
+          "tau": 0.1
+        },
+        {
+          "Cbar": 100,
+          "tau": 1
+        }
+      ],
+      "grid7": [
+        {
+          "Cbar": 0.1,
+          "bandwidth_multiplier": 0.1
+        },
+        {
+          "Cbar": 0.1,
+          "bandwidth_multiplier": 1
+        },
+        {
+          "Cbar": 0.1,
+          "bandwidth_multiplier": 10
+        },
+        {
+          "Cbar": 1,
+          "bandwidth_multiplier": 0.1
+        },
+        {
+          "Cbar": 1,
+          "bandwidth_multiplier": 1
+        },
+        {
+          "Cbar": 1,
+          "bandwidth_multiplier": 10
+        },
+        {
+          "Cbar": 10,
+          "bandwidth_multiplier": 0.1
+        },
+        {
+          "Cbar": 10,
+          "bandwidth_multiplier": 1
+        },
+        {
+          "Cbar": 10,
+          "bandwidth_multiplier": 10
+        },
+        {
+          "Cbar": 100,
+          "bandwidth_multiplier": 0.1
+        },
+        {
+          "Cbar": 100,
+          "bandwidth_multiplier": 1
+        },
+        {
+          "Cbar": 100,
+          "bandwidth_multiplier": 10
+        }
+      ],
+      "grid8": [
+        {
+          "lambda": 0.01
+        },
+        {
+          "lambda": 0.1
+        },
+        {
+          "lambda": 0.3
+        },
+        {
+          "lambda": 0.6
+        },
+        {
+          "lambda": 1
+        }
+      ],
+      "grid9": [
+        {
+          "lambda_row": 0.05,
+          "lambda_time": 0.05
+        },
+        {
+          "lambda_row": 0.05,
+          "lambda_time": 0.2
+        },
+        {
+          "lambda_row": 0.05,
+          "lambda_time": 0.5
+        },
+        {
+          "lambda_row": 0.05,
+          "lambda_time": 1
+        },
+        {
+          "lambda_row": 0.2,
+          "lambda_time": 0.05
+        },
+        {
+          "lambda_row": 0.2,
+          "lambda_time": 0.2
+        },
+        {
+          "lambda_row": 0.2,
+          "lambda_time": 0.5
+        },
+        {
+          "lambda_row": 0.2,
+          "lambda_time": 1
+        },
+        {
+          "lambda_row": 0.5,
+          "lambda_time": 0.05
+        },
+        {
+          "lambda_row": 0.5,
+          "lambda_time": 0.2
+        },
+        {
+          "lambda_row": 0.5,
+          "lambda_time": 0.5
+        },
+        {
+          "lambda_row": 0.5,
+          "lambda_time": 1
+        },
+        {
+          "lambda_row": 1,
+          "lambda_time": 0.05
+        },
+        {
+          "lambda_row": 1,
+          "lambda_time": 0.2
+        },
+        {
+          "lambda_row": 1,
+          "lambda_time": 0.5
+        },
+        {
+          "lambda_row": 1,
+          "lambda_time": 1
+        }
+      ]
+    },
+    "jobs": {
+      "RetinaMNIST__linear_svm": "grid1",
+      "RetinaMNIST__smm": "grid2",
+      "RetinaMNIST__spatial_svm": "grid3",
+      "RetinaMNIST__spatial_smm": "grid4",
+      "RetinaMNIST__crammer_singer": "grid5",
+      "RetinaMNIST__msmm": "grid6",
+      "RetinaMNIST__rbf_svm": "grid7",
+      "RetinaMNIST__shrinkage_lda": "grid8",
+      "RetinaMNIST__separable_lda": "grid9"
+    }
+  },
+  "grid_members": {
+    "templates": {
+      "grid1": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "grid2": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "grid3": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "grid4": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "grid5": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    "jobs": {
+      "RetinaMNIST__linear_svm": "grid1",
+      "RetinaMNIST__smm": "grid2",
+      "RetinaMNIST__spatial_svm": "grid2",
+      "RetinaMNIST__spatial_smm": "grid3",
+      "RetinaMNIST__crammer_singer": "grid1",
+      "RetinaMNIST__msmm": "grid2",
+      "RetinaMNIST__rbf_svm": "grid2",
+      "RetinaMNIST__shrinkage_lda": "grid4",
+      "RetinaMNIST__separable_lda": "grid5"
+    }
+  },
+  "data_sha256": {
+    "RetinaMNIST_train.rds": "16197934c1abee4811ad6bdd8a8fb00129675f638f0801b7cedb0b71d4355cd0",
+    "RetinaMNIST_test.rds": "c11ef7e28e57abd1d42d5c64d50ff1eeec85077df30877bec0fc2333208ca09d"
+  }
+}

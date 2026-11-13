@@ -1,0 +1,27 @@
+# Run one original ablation block. Arguments: --execute scenario replication input-root output-root.
+args <- commandArgs(TRUE)
+if (length(args) != 5L || args[1] != '--execute')
+  stop('Usage: --execute s01 replication INPUT_ROOT OUTPUT_ROOT')
+scenario <- as.integer(sub('^s', '', args[2])); replication <- as.integer(args[3])
+stopifnot(scenario %in% 1:16, replication %in% 1:50)
+script <- sub('^--file=', '', grep('^--file=', commandArgs(), value = TRUE)[1])
+root <- dirname(dirname(normalizePath(script)))
+block <- sprintf('s%02d_r%03d', scenario, replication)
+output <- file.path(args[5], paste0(block, '.rds'))
+if (file.exists(output)) stop('Output already exists')
+inputs <- readRDS(file.path(args[4], 'blocks', block, 'inputs.rds'))
+for (name in c('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'VECLIB_MAXIMUM_THREADS'))
+  do.call(Sys.setenv, setNames(list('1'), name))
+source(file.path(root, 'R/load.R'))
+smm <- load_smm(root)
+seeds <- vapply(11:14, function(stream)
+  smm$mc_seed(smm$paper_design(), scenario, replication, stream), integer(1))
+result <- smm$run_ablation(inputs, seeds)
+dir.create(dirname(output), recursive = TRUE, showWarnings = FALSE)
+saveRDS(result, output)
+rows <- lapply(names(result$evaluations), function(method) {
+  x <- result$evaluations[[method]]
+  data.frame(scenario = sprintf('s%02d', scenario), replication, method,
+    BA = x$BA, macro_F1 = x$macro_F1)
+})
+write.csv(do.call(rbind, rows), sub('[.]rds$', '.csv', output), row.names = FALSE)

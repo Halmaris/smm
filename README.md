@@ -84,6 +84,13 @@ runs one supplied four-variant block. The optional equal-budget and penalty-doma
 experiments have separate [designs and execution commands](code/docs/SIMULATIONS.md).
 Full simulations are substantial computations and require explicit execution.
 
+## Reproducing the paper
+
+[REPRODUCING.md](code/docs/REPRODUCING.md) maps the experiments to code and commands.
+Historical job seeds, candidate grids and input checksums are in `code/configs/`.
+Saved predictions, quality scores, simulation results and timing measurements can
+be analysed with `code/scripts/analyse_saved.R`, without fitting models.
+
 ## Methods and configuration
 
 - Nuclear regularization promotes low-rank coefficient matrices. The adjacency
@@ -122,6 +129,7 @@ classifiers. `tests/test_models.R` separately fits small synthetic models.
 | `code/python/` | Optuna TPE interface |
 | `code/scripts/` | Environment setup and explicit experiment/analysis commands |
 | `code/tests/` | Algebraic, mock and small synthetic solver tests |
+| `code/configs/` | Historical experiment settings, seeds and input checksums |
 | `code/docs/` | Methods, data sources, simulations and environment instructions |
 
 Historical launchers, checkpoint-recovery services and publication-table/figure

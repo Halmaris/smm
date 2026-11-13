@@ -67,3 +67,8 @@ No publication tables, figures, background controllers, automatic retries or
 checkpoint-recovery machinery are included. Tests and their limits are described
 in [VALIDATION.md](docs/VALIDATION.md). This code preserves the model definitions
 and search protocol, not every historical timing implementation.
+
+## Paper experiments and saved results
+
+See [REPRODUCING.md](docs/REPRODUCING.md) for the experiment map, historical
+configurations and commands for analysing saved predictions and measurements.

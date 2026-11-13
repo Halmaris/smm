@@ -1,0 +1,70 @@
+{
+  "version": "multiclass-ablation-v2-optuna",
+  "seed": 20261107,
+  "classes": [
+    3,
+    5
+  ],
+  "ranks": [
+    2,
+    8
+  ],
+  "roughness": [
+    "smooth",
+    "rough"
+  ],
+  "train_per_class": [
+    25,
+    100
+  ],
+  "p": 8,
+  "T": 32,
+  "noise_sd": 0.5,
+  "test_per_class": 1000,
+  "replications": 50,
+  "folds": 5,
+  "trials": 100,
+  "methods": [
+    "M00",
+    "M10",
+    "M01",
+    "M11"
+  ],
+  "C_range": [
+    0.01,
+    1000
+  ],
+  "tau_range": [
+    0.0001,
+    100
+  ],
+  "gamma_range": [
+    1e-05,
+    10000
+  ],
+  "solver": {
+    "max_iter": 300000,
+    "abs_tol": 0.0001,
+    "rel_tol": 0.001,
+    "gap_tol": 0.001,
+    "relaxation": 1.5,
+    "certificate_interval": 25
+  },
+  "optuna_version": "4.5.0",
+  "search": "historical_TPE_bound_pruning",
+  "protocol_sha256": {
+    "optuna_bridge.R": "0235a100ed81bf07f3a3c427989c9908fed10fa5f0416f7f9ba9fbdc1231ff9b",
+    "stable_models.R": "24dfcc72f0273e98bc44c04036ff99350dc66ce0e29ea73a405163d0344413a5"
+  },
+  "seed_rule": "seed + scenario_index * 100000 + replication * 100 + stream",
+  "streams": {
+    "coefficients": 1,
+    "train": 2,
+    "test": 3,
+    "folds": 4,
+    "M00": 11,
+    "M10": 12,
+    "M01": 13,
+    "M11": 14
+  }
+}

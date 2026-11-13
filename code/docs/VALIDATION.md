@@ -95,3 +95,12 @@ environment checks; compilation concerned R package dependencies only.
 
 These lockfiles define the environment checked on this date; they do not claim
 to reconstruct every transitive package version used in historical campaigns.
+
+## Saved-result tools
+
+`Rscript --vanilla tests/test_saved_analysis.R` checks classification metrics,
+paired replication alignment and incomplete blocks without fitting models.
+The added CSV analyser was also checked against the saved manuscript inputs:
+multiclass effects, intervals and Holm p-values, and temporal BA rank comparisons.
+The checksum utility was tested with matching, changed and missing files.
+The new multiclass runner was syntax-checked; no new model fits were run.
