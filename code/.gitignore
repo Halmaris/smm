@@ -1,0 +1,17 @@
+.Rhistory
+.RData
+.Rproj.user/
+.DS_Store
+__pycache__/
+*.pyc
+*.o
+*.so
+*.dylib
+.venv/
+data/
+results/
+*.rds
+*.RDS
+*.pkl
+*.sqlite*
+.renv/

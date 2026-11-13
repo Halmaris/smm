@@ -1,0 +1,16 @@
+# End-to-end R/Python tuning interface with deterministic mock predictions.
+args <- commandArgs(FALSE)
+script <- sub('^--file=', '', args[startsWith(args, '--file=')][1])
+root <- dirname(dirname(normalizePath(script)))
+source(file.path(root,'R','load.R'))
+m <- load_smm(root,compile=FALSE)
+set.seed(5)
+y <- factor(rep(1:3,10))
+X <- lapply(seq_along(y), function(i) matrix(c(as.integer(y[i]),rnorm(5)),2,3))
+train <- list(X=X,y=y,folds=m$stratified_folds(y,1))
+fitter <- function(context,Cbar,tau,gamma) list(classes=context$labels$classes)
+predictor <- function(object,newdata) factor(vapply(newdata,function(x) x[1,1],0),levels=1:3)
+result <- m$tune_direct(train,'M00',91001,6,fitter=fitter,predictor=predictor)
+stopifnot(nrow(result$trials)==6,all(result$trials$status=='complete'),
+  all(result$trials$folds==5),all(result$trials$score==1))
+cat('PASS: R/Python interface, all five folds, pooled score and deterministic selection.\n')

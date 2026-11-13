@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: 'Please cite this research software and the associated manuscript when using the methods.'
+title: 'Structured support matrix machines'
+type: software
+authors:
+  - family-names: 'Górecki'
+    given-names: 'Tomasz'
+abstract: 'Research implementation of nuclear and adjacency regularization for matrix-valued classification.'
+keywords:
+  - support matrix machines
+  - low-rank regularization
+  - temporal and spatial smoothness
+  - multiclass classification
+license: MIT
+repository-code: 'https://github.com/Halmaris/smm'
