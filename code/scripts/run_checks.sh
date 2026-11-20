@@ -9,3 +9,4 @@ export RETICULATE_PYTHON="${RETICULATE_PYTHON:-$root/.venv/bin/python}"
 Rscript --vanilla "$root/tests/test_math.R"
 Rscript --vanilla "$root/tests/test_tuning.R"
 Rscript --vanilla "$root/tests/test_models.R"
+(cd "$root" && Rscript --vanilla tests/test_saved_analysis.R)

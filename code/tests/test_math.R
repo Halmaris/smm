@@ -1,7 +1,7 @@
 # Algebraic and workflow tests; no research campaign is executed.
 args <- commandArgs(FALSE)
 script <- sub('^--file=', '', args[startsWith(args, '--file=')][1])
-root <- dirname(dirname(normalizePath(script)))
+root <- dirname(dirname(normalizePath(gsub('~+~', ' ', script, fixed = TRUE))))
 source(file.path(root, 'R', 'load.R'))
 m <- load_smm(root, compile = FALSE)
 stopifnot(identical(m$.smm_pack(array(1:12, c(1,3,4)))$p, 1L))

@@ -6,7 +6,7 @@ for (name in c('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'VE
   do.call(Sys.setenv, setNames(list('1'), name))
 full_args <- commandArgs(FALSE)
 script <- sub('^--file=', '', full_args[startsWith(full_args, '--file=')][1])
-root <- dirname(dirname(normalizePath(script)))
+root <- dirname(dirname(normalizePath(gsub('~+~', ' ', script, fixed = TRUE))))
 source(file.path(root, 'R', 'load.R'))
 smm <- load_smm(root)
 stage <- args[2]; scenario <- args[3]; replication <- as.integer(args[4]); seed <- as.integer(args[5])

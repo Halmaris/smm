@@ -1,3 +1,5 @@
+# Multiclass simulation design ------------------------------------------
+
 #' Enumerate the fixed class/rank/roughness/training-size factorial design.
 #' @param cfg Generator settings from paper_design.
 mc_plan <- function(cfg) {
@@ -110,6 +112,8 @@ mc_inputs <- function(cfg, job, replication, scenario) {
   list(train = train, test = test, truth = truth)
 }
 
+# Population and sample summaries ---------------------------------------
+
 #' Compute pooled balanced accuracy and macro-F1 on all supplied predictions.
 #' @param y Class labels; internal binary operations use -1/+1 and direct operations use 1..K.
 #' @param pred Predicted class labels.
@@ -137,6 +141,8 @@ mc_structure <- function(fit) {
     function(j) one(fit$W[, pairs[1L, j]] - fit$W[, pairs[2L, j]]), numeric(2)),
     coordinates = 'training-standardized; scale invariant summaries, not coefficient recovery')
 }
+# Binary simulation design ----------------------------------------------
+
 #' Generate the binary matrix-classification model used in the original study.
 #' @param n_train Number of binary development observations.
 #' @param n_test Number of binary test observations.

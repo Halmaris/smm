@@ -1,7 +1,7 @@
 # Small synthetic solver tests, not paper experiments.
 args <- commandArgs(FALSE)
 script <- sub('^--file=', '', args[startsWith(args, '--file=')][1])
-root <- dirname(dirname(normalizePath(script)))
+root <- dirname(dirname(normalizePath(gsub('~+~', ' ', script, fixed = TRUE))))
 source(file.path(root, 'R', 'load.R'))
 m <- load_smm(root)
 set.seed(31)

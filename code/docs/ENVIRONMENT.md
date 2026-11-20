@@ -86,15 +86,15 @@ in [VALIDATION.md](VALIDATION.md).
 
 ## Dependency scope
 
-Direct R dependencies are Rcpp 1.1.2, Matrix 1.7-3, reticulate 1.43.0 and e1071
-1.7-16. The lockfile also includes their required dependencies and renv: 17
+Direct R dependencies are Rcpp 1.1.2, Matrix 1.7-3, reticulate 1.43.0, dplyr 1.1.4, tidyr 1.3.1 and e1071
+1.7-16. The lockfile also includes their required dependencies and renv: 35
 packages in total; base R packages are supplied by R 4.5.1.
 
 Optuna 4.5.0 is the sole direct third-party Python dependency. Its 10 transitive
 dependencies are pinned as well, including NumPy and SQLAlchemy. No unrelated
 packages from the author's Python installation are included.
 
-The files describe the environment checked on 13 November 2026. They preserve
+The lock includes the tidyverse packages used by the analysis scripts. It preserves
 the documented direct research dependencies, but are not a recovered complete
 snapshot of every historical campaign environment.
 
@@ -113,7 +113,7 @@ snapshot only the research dependencies:
 
 ```r
 renv::snapshot(project = '.', library = '.renv/library',
-               packages = c('Rcpp', 'Matrix', 'reticulate', 'e1071', 'renv'),
+               packages = c('Rcpp', 'Matrix', 'reticulate', 'e1071', 'dplyr', 'tidyr', 'renv'),
                lockfile = 'renv.lock', prompt = FALSE)
 ```
 

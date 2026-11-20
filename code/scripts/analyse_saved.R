@@ -3,7 +3,7 @@
 args <- commandArgs(TRUE)
 if (length(args) != 3L) stop('Usage: Rscript scripts/analyse_saved.R MODE INPUT.csv OUTPUT_DIR')
 script <- sub('^--file=', '', grep('^--file=', commandArgs(), value = TRUE)[1])
-root <- dirname(dirname(normalizePath(script)))
+root <- dirname(dirname(normalizePath(gsub('~+~', ' ', script, fixed = TRUE))))
 source(file.path(root, 'R/saved_analysis.R'))
 mode <- args[1]; df <- read.csv(args[2], check.names = FALSE)
 out <- args[3]
@@ -28,14 +28,15 @@ if (mode == 'quality') {
     all(is.finite(df$balanced_accuracy)), all(is.finite(df$macro_f1)),
     all(df$balanced_accuracy >= 0 & df$balanced_accuracy <= 1),
     all(df$macro_f1 >= 0 & df$macro_f1 <= 1))
-  rows <- list()
-  for (s in unique(df$scenario)) for (method in unique(df$method)) {
-    d <- df[df$scenario == s & df$method == method, ]
-    stopifnot(setequal(d$replication, 1:50))
-    for (metric in c('balanced_accuracy', 'macro_f1')) rows[[length(rows) + 1L]] <-
-      cbind(data.frame(scenario = s, method, metric), paired_interval(100 * d[[metric]])[1:5])
-  }
-  write(do.call(rbind, rows), 'summary')
+  counts <- dplyr::count(df, scenario, method)
+  stopifnot(!anyNA(df[c('scenario', 'replication', 'method')]),
+    all(df$replication %in% 1:50), all(counts$n == 50L),
+    nrow(counts) == dplyr::n_distinct(df$scenario) * dplyr::n_distinct(df$method))
+  summary <- df |>
+    tidyr::pivot_longer(c(balanced_accuracy, macro_f1), names_to = 'metric') |>
+    dplyr::summarise(paired_interval(100 * value), .by = c(scenario, method, metric)) |>
+    dplyr::select(-p)
+  write(summary, 'summary')
 } else if (mode == 'timing') {
   # Input consists of measured repeats only; warm-ups are kept in a separate file.
   stopifnot(!anyNA(df[c('dataset', 'method', 'repeat', 'seconds')]),
@@ -46,16 +47,13 @@ if (mode == 'quality') {
 } else if (mode == 'predictions') {
   stopifnot(!anyNA(df[c('dataset', 'method', 'id', 'truth', 'prediction')]),
     !anyDuplicated(df[c('dataset', 'method', 'id')]))
-  rows <- list()
-  for (dataset in unique(df$dataset)) {
-    d <- df[df$dataset == dataset, ]; ref <- d[d$method == d$method[1], ]
-    for (method in unique(d$method)) {
-      z <- d[d$method == method, ]
-      stopifnot(setequal(z$id, ref$id))
-      z <- z[match(ref$id, z$id), ]; stopifnot(all(z$truth == ref$truth))
-      rows[[length(rows) + 1L]] <- cbind(data.frame(dataset, method),
-        classification_metrics(z$truth, z$prediction))
-    }
-  }
-  write(do.call(rbind, rows), 'metrics')
+  # Each method must score the same labelled observations within a dataset.
+  pairs <- df |>
+    dplyr::mutate(expected = dplyr::n_distinct(method), .by = dataset) |>
+    dplyr::summarise(valid = dplyr::n() == dplyr::first(expected) &
+                       dplyr::n_distinct(truth) == 1L, .by = c(dataset, id))
+  stopifnot(all(pairs$valid))
+  metrics <- df |>
+    dplyr::summarise(classification_metrics(truth, prediction), .by = c(dataset, method))
+  write(metrics, 'metrics')
 } else stop('Unknown mode: ', mode)

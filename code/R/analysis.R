@@ -6,23 +6,24 @@
 summarize_additional <- function(comparisons) {
   keys <- c('scenario', 'replication', 'tpe_seed', 'contrast')
   stopifnot(!anyDuplicated(comparisons[keys]), !anyNA(comparisons))
-  blocks <- split(comparisons, interaction(comparisons[c('scenario', 'replication', 'contrast')], drop = TRUE))
-  stopifnot(all(vapply(blocks, function(df) setequal(df$tpe_seed, c(91001L, 91002L)), TRUE)))
-  means <- stats::aggregate(comparisons[c('BA_difference', 'F1_difference')],
-    comparisons[c('scenario', 'replication', 'contrast')], mean)
-  groups <- split(means, interaction(means[c('scenario', 'contrast')], drop = TRUE))
-  summary <- do.call(rbind, lapply(groups, function(df) {
-    stopifnot(setequal(df$replication, 1:10))
-    do.call(rbind, lapply(c('BA_difference', 'F1_difference'), function(metric) {
-      x <- df[[metric]]; n <- length(x); estimate <- mean(x); se <- sd(x) / sqrt(n)
-      # Degenerate differences have no estimable sampling variance for a t test.
-      p <- if (se > 0) 2 * pt(-abs(estimate / se), n - 1) else NA_real_
-      data.frame(scenario = df$scenario[1], contrast = df$contrast[1], metric = metric,
-        replications = n, estimate = estimate, lower = estimate - qt(.975, n - 1) * se,
-        upper = estimate + qt(.975, n - 1) * se, p = p)
-    }))
-  }))
-  summary$p_holm <- ave(summary$p, summary$metric, FUN = function(p) p.adjust(p, 'holm'))
-  rownames(summary) <- NULL
-  list(replication_means = means, summary = summary)
+  stopifnot(all(comparisons$tpe_seed %in% c(91001L, 91002L)))
+  means <- comparisons |>
+    dplyr::summarise(seeds = dplyr::n(),
+      dplyr::across(c(BA_difference, F1_difference), mean),
+      .by = c(scenario, replication, contrast)) |>
+    dplyr::arrange(contrast, replication, scenario)
+  stopifnot(all(means$seeds == 2L), all(means$replication %in% 1:10))
+  means$seeds <- NULL
+
+  # The independent unit is a replication, after averaging its two search seeds.
+  summary <- means |>
+    tidyr::pivot_longer(c(BA_difference, F1_difference), names_to = 'metric') |>
+    dplyr::arrange(contrast, scenario, metric, replication) |>
+    dplyr::summarise(paired_interval(value), .by = c(scenario, contrast, metric)) |>
+    dplyr::mutate(p_holm = p.adjust(p, 'holm'), .by = metric) |>
+    dplyr::select(scenario, contrast, metric, replications = n, estimate = mean,
+                  lower, upper, p, p_holm) |>
+    as.data.frame()
+  stopifnot(all(summary$replications == 10L))
+  list(replication_means = as.data.frame(means), summary = summary)
 }

@@ -1,3 +1,5 @@
+# Native backend --------------------------------------------------------
+
 #' Compile the study's FP32 kernel with the macOS Accelerate library.
 #' @param source_file Path to admm_fp32.cpp.
 #' @return Backend information; no data generation or fitting is performed.
@@ -23,6 +25,8 @@ compile_solver <- function(source_file) {
   Rcpp::sourceCpp(source_file, env = environment(compile_solver), cacheDir = cache, showOutput = FALSE)
   invisible(smm_fp32_info())
 }
+
+# Direct multiclass fit -------------------------------------------------
 
 #' Fit the coupled multiclass objective with per-class nuclear and adjacency penalties.
 #' @param context Partition-specific context from smm_context.
@@ -97,6 +101,8 @@ fit_direct <- function(context, Cbar = 1, tau = .1, gamma = .1, max_iter = 30000
     Cbar = Cbar, tau = tau, gamma = gamma), final$certificate), class = 'smm_model')
 }
 
+# One-versus-rest fit ---------------------------------------------------
+
 #' Fit balanced one-versus-rest margins with a free intercept.
 #' @param context Partition-specific context from smm_context.
 #' @param Cbar Multiplier of each balanced binary mean hinge loss.
@@ -163,6 +169,8 @@ fit_ovr <- function(context, Cbar = 1, tau = .1, gamma = .1, max_iter = 300000L,
     Cbar = Cbar, tau = tau, gamma = gamma, converged = TRUE, iterations = out$iterations,
     diagnostics = final$diagnostics, precision = 'FP32', canonical_scores = TRUE), class = 'smm_model')
 }
+
+# Prediction and method dispatch ----------------------------------------
 
 #' Predict with a fitted matrix classifier.
 #' @param object Model returned by fit_direct or fit_ovr.

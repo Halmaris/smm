@@ -1,3 +1,5 @@
+# Summary statistics ----------------------------------------------------
+
 # Summarize paired replications; x contains finite per-replication differences.
 paired_interval <- function(x) {
   stopifnot(length(x) > 1L, all(is.finite(x)))
@@ -20,6 +22,8 @@ classification_metrics <- function(truth, prediction) {
     macro_f1 = mean(2 * tp / (rowSums(tab) + colSums(tab))))
 }
 
+# Paired factorial contrasts --------------------------------------------
+
 # Summarize original four-variant ablations; df has scenario/replication/method/BA/macro_F1.
 multiclass_contrasts <- function(df) {
   methods <- c('M00', 'M10', 'M01', 'M11')
@@ -27,26 +31,29 @@ multiclass_contrasts <- function(df) {
     !anyDuplicated(df[c('scenario', 'replication', 'method')]),
     setequal(df$method, methods), all(df$BA >= 0 & df$BA <= 1),
     all(df$macro_F1 >= 0 & df$macro_F1 <= 1))
-  rows <- list()
-  for (scenario in sort(unique(df$scenario))) for (metric in c('BA', 'macro_F1')) {
-    d <- df[df$scenario == scenario, ]
-    reps <- sort(unique(d$replication))
-    values <- vapply(methods, function(method) {
-      z <- d[d$method == method, ]
-      stopifnot(setequal(z$replication, reps))
-      z[match(reps, z$replication), metric]
-    }, numeric(length(reps)))
-    effects <- list(nuclear_without_smoothing = values[, 'M10'] - values[, 'M00'],
-      nuclear_given_smoothing = values[, 'M11'] - values[, 'M01'],
-      smoothing_without_nuclear = values[, 'M01'] - values[, 'M00'],
-      smoothing_given_nuclear = values[, 'M11'] - values[, 'M10'],
-      interaction = values[, 'M11'] - values[, 'M10'] - values[, 'M01'] + values[, 'M00'])
-    for (effect in names(effects)) rows[[length(rows) + 1L]] <- cbind(
-      data.frame(scenario, metric, effect, primary = metric == 'BA' &&
-        effect %in% c('nuclear_given_smoothing', 'smoothing_given_nuclear')),
-      paired_interval(100 * effects[[effect]]))
-  }
-  result <- do.call(rbind, rows)
+  # Align the four fitted variants by replication before taking differences.
+  wide <- df |>
+    tidyr::pivot_longer(c(BA, macro_F1), names_to = 'metric', values_to = 'score') |>
+    tidyr::pivot_wider(id_cols = c(scenario, replication, metric),
+                       names_from = method, values_from = score)
+  stopifnot(!anyNA(wide[methods]))
+
+  result <- wide |>
+    dplyr::arrange(scenario, metric, replication) |>
+    dplyr::transmute(scenario, replication, metric,
+      nuclear_without_smoothing = M10 - M00,
+      nuclear_given_smoothing = M11 - M01,
+      smoothing_without_nuclear = M01 - M00,
+      smoothing_given_nuclear = M11 - M10,
+      interaction = M11 - M10 - M01 + M00) |>
+    tidyr::pivot_longer(-c(scenario, replication, metric),
+                        names_to = 'effect', values_to = 'difference') |>
+    dplyr::summarise(paired_interval(100 * difference), .by = c(scenario, metric, effect)) |>
+    dplyr::mutate(primary = metric == 'BA' &
+      effect %in% c('nuclear_given_smoothing', 'smoothing_given_nuclear'), .after = effect) |>
+    as.data.frame()
+
+  # Adjust across the prespecified BA comparisons only.
   result$p_holm <- NA_real_
   result$p_holm[result$primary] <- p.adjust(result$p[result$primary], 'holm')
   result

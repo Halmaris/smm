@@ -1,3 +1,5 @@
+# Study design ----------------------------------------------------------
+
 #' Return the fixed design of the completed multiclass ablation.
 #' @return Generator settings; calling this function generates no data and fits no model.
 paper_design <- function() {
@@ -22,6 +24,8 @@ additional_plan <- function(stage = 'core') {
   df
 }
 
+# Model selection and held-out assessment -------------------------------
+
 #' Choose the best single-penalty family using development CV alone.
 #' @param tuned Named tuning objects for M00, M10 and M01.
 #' @return Method name; exact score ties retain the order M00, M10, M01.
@@ -41,9 +45,11 @@ assess_choice <- function(inputs, choice, fitter = fit_direct, predictor = predi
   model <- do.call(fitter, c(list(context = smm_context(inputs$train$X, inputs$train$y)),
     choice$parameters))
   pred <- predictor(model, inputs$test$X)
-  list(BA = mc_metrics(inputs$test$y, pred)$BA,
-    macro_F1 = mc_metrics(inputs$test$y, pred)$macro_F1, prediction = pred)
+  scores <- mc_metrics(inputs$test$y, pred)
+  list(BA = scores$BA, macro_F1 = scores$macro_F1, prediction = pred)
 }
+
+# Experiment blocks -----------------------------------------------------
 
 #' Execute one explicitly requested additional-experiment block, sequentially.
 #' @param inputs Frozen train/test inputs including original folds; attribute identity
@@ -79,21 +85,22 @@ run_additional <- function(inputs, scenario, replication, seed, stage = 'core', 
       BA_difference = evaluations$M11$BA - evaluations[[selected]]$BA,
       F1_difference = evaluations$M11$macro_F1 - evaluations[[selected]]$macro_F1)
   } else {
-    comparison <- lapply(names(tuned), function(method) {
+    comparison <- list()
+    for (method in names(tuned)) {
       baseline <- core$evaluations[[method]]
       if (is.null(baseline)) {
         baseline <- assessor(inputs, core$tuned[[method]]$selection)
-        refits <<- refits + 1L
+        refits <- refits + 1L
       }
       expanded <- assessor(inputs, tuned[[method]]$selection)
-      refits <<- refits + 1L
-      evaluations[[method]] <<- list(original = baseline, expanded = expanded)
-      data.frame(scenario = scenario, replication = replication, tpe_seed = seed,
+      refits <- refits + 1L
+      evaluations[[method]] <- list(original = baseline, expanded = expanded)
+      comparison[[method]] <- data.frame(scenario = scenario, replication = replication, tpe_seed = seed,
         contrast = paste(method, 'expanded - original gamma domain'), selected = method,
         BA_difference = expanded$BA - baseline$BA,
         F1_difference = expanded$macro_F1 - baseline$macro_F1)
-    })
-    comparison <- do.call(rbind, comparison)
+    }
+    comparison <- dplyr::bind_rows(comparison)
   }
   list(stage = stage, scenario = scenario, replication = replication, tpe_seed = seed,
     input_identity = attr(inputs, 'identity'), tuned = tuned, evaluations = evaluations,

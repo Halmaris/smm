@@ -1,3 +1,5 @@
+# Design matrices and training context ----------------------------------
+
 #' Pack a list of p-by-q observations into an n-by-(p*q) design matrix.
 #' @param X List of equally sized numeric matrices, or a p-by-q-by-n array.
 #' @return A list containing the vectorized observations and matrix dimensions.
@@ -74,6 +76,8 @@ smm_context <- function(X, y, structure = 'temporal', standardize = TRUE, channe
   }
   value <- build(); assign(key, value, context$cache); value
 }
+
+# Cross-validation and pruning ------------------------------------------
 
 #' Create a fixed stratified cross-validation partition.
 #' @param y Class labels, with at least folds observations in every class.

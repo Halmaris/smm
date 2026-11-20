@@ -14,11 +14,9 @@ def verify(config, root):
         if not path.is_file():
             failures.append(f'{name}: missing')
             continue
-        digest = hashlib.sha256()
         with path.open('rb') as stream:
-            for chunk in iter(lambda: stream.read(1024 * 1024), b''):
-                digest.update(chunk)
-        if digest.hexdigest() != expected:
+            digest = hashlib.file_digest(stream, 'sha256').hexdigest()
+        if digest != expected:
             failures.append(f'{name}: checksum mismatch')
     return failures
 

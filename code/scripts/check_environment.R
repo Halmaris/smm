@@ -9,7 +9,7 @@ for (name in names(lock$Packages)) {
   stopifnot(normalizePath(find.package(name)) ==
               normalizePath(file.path(library_path, name)))
 }
-for (name in c('Rcpp', 'Matrix', 'reticulate', 'e1071'))
+for (name in c('Rcpp', 'Matrix', 'reticulate', 'e1071', 'dplyr', 'tidyr'))
   stopifnot(requireNamespace(name, quietly = TRUE))
 
 source('R/load.R')

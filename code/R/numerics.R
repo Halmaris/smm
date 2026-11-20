@@ -1,3 +1,5 @@
+# Numerical primitives --------------------------------------------------
+
 # Numerical building blocks for the common FP32 solver and FP64 checks.
 #' Validate a finite scalar numerical parameter.
 #' @param x Numeric input or diagnostic record described by this function.
@@ -67,6 +69,8 @@ shrinkage <- function(X, tau) {
   list(X = sweep(sweep(X, 2L, rep(center, q), '-'), 2L, rep(scale, q), '/'),
        center = center, scale = scale)
 }
+
+# Dual certificates and hinge operators ---------------------------------
 
 #' Construct a feasible binary dual point and evaluate the primal-dual gap.
 #' @param w Vectorized coefficient matrix for a single margin.
@@ -165,6 +169,8 @@ shrinkage <- function(X, tau) {
   wrong[cbind(seq_along(y), y)] <- 0
   apply(wrong, 1L, max)
 }
+# Structured penalty operators ------------------------------------------
+
 #' Construct the sparse Gram matrix of temporal second differences.
 #' @param q Number of matrix columns.
 .smm_banded_penalty <- function(q) {
@@ -273,6 +279,8 @@ shrinkage <- function(X, tau) {
     .smm_two_sided_action(transformed / denominator, spectrum$row, spectrum$column)
   }
 }
+# Multiclass certification and refinement -------------------------------
+
 #' Project multiclass dual variables onto feasible sets and compute an FP64 gap.
 #' @param W Stacked coefficient columns, one per class.
 #' @param X Matrix-valued observations or the vectorized design matrix for this operation.

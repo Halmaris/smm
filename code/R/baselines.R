@@ -1,3 +1,5 @@
+# Feature transformations and covariance estimates ----------------------
+
 #' Construct orthonormal discrete cosine basis columns.
 #' @param T Temporal grid length.
 #' @param r Retained basis dimension.
@@ -43,6 +45,8 @@ covariance_sum <- function(E, operation) {
   if (length(E) > 1L) for (i in 2:length(E)) value <- value + operation(E[[i]])
   value
 }
+
+# Comparator fitting and prediction -------------------------------------
 
 #' Fit a kernel, covariance or temporal-representation comparator on training data only.
 #' @param X Matrix-valued observations or the vectorized design matrix for this operation.
