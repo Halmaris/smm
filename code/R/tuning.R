@@ -19,7 +19,7 @@ tune_direct <- function(train, method = 'M11', seed = 91001L, budget = 100L,
   search <- py$Search(method, as.integer(seed), as.integer(budget), gamma_max)
   contexts <- lapply(1:5, function(fold) {
     ids <- which(train$folds != fold)
-    return(smm_context(train$X[ids], train$y[ids], structure, channels = channels))
+    smm_context(train$X[ids], train$y[ids], structure, channels = channels)
   })
   records <- vector('list', budget)
   for (i in seq_len(budget)) {
@@ -63,7 +63,7 @@ select_grid <- function(X, y, folds, candidates, fit, predict) {
       model <- fit(X[-ids], y[-ids], as.list(candidates[j, , drop = FALSE]))
       pred[ids] <- as.character(predict(model, X[ids]))
     }
-    return(mc_metrics(y, pred)$BA)
+    mc_metrics(y, pred)$BA
   }, 0)
   return(list(index = which.max(scores), scores = scores))
 }

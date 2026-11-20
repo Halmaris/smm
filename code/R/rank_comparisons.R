@@ -2,7 +2,7 @@
 # p: pairwise p-values in combn(k, 2) order; k: number of methods.
 bergmann_hommel <- local({
   engine <- NULL
-  function(p, k) {
+  adjust <- function(p, k) {
     stopifnot(k >= 2L, k <= 12L, length(p) == choose(k, 2),
       all(is.finite(p)), all(p >= 0 & p <= 1))
     if (is.null(engine)) {
@@ -59,10 +59,11 @@ bergmann_hommel <- local({
     result$closed_p <- result$adjusted
     # Conservative monotone envelope used in the published example and scmamp.
     levels <- sort(unique(p))
-    envelope <- cummax(vapply(levels, function(x) return(max(result$closed_p[p == x])), numeric(1)))
+    envelope <- cummax(vapply(levels, function(x) max(result$closed_p[p == x]), numeric(1)))
     result$adjusted <- envelope[match(p, levels)]
     return(result)
   }
+  adjust
 })
 
 # Transitive near-equality classes avoid breaking ties through CSV round-off.
@@ -80,8 +81,8 @@ nonrejection_cliques <- function(k, pairs, rejected) {
   adjacent[cbind(pairs[1L, rejected], pairs[2L, rejected])] <- FALSE
   adjacent <- adjacent & t(adjacent)
   candidates <- lapply(seq_len(2^k - 1L), function(mask)
-    return(which(as.logical(intToBits(mask)[seq_len(k)]))))
-  candidates <- Filter(function(s) return(length(s) > 1L && all(adjacent[s, s])), candidates)
+    which(as.logical(intToBits(mask)[seq_len(k)])))
+  candidates <- Filter(function(s) length(s) > 1L && all(adjacent[s, s]), candidates)
   is_maximal <- function(s) {
     contains_s <- function(t) return(length(t) > length(s) && all(s %in% t))
     return(!any(vapply(candidates, contains_s, logical(1))))
@@ -97,7 +98,7 @@ compare_rank_matrix <- function(scores, alpha = .05) {
   dimnames(ranks) <- dimnames(scores)
   N <- nrow(ranks); k <- ncol(ranks); mean_rank <- colMeans(ranks)
   Q0 <- 12 * N / (k * (k + 1)) * sum((mean_rank - (k + 1) / 2)^2)
-  tie_sum <- sum(apply(ranks, 1L, function(x) return(sum(table(x)^3 - table(x)))))
+  tie_sum <- sum(apply(ranks, 1L, function(x) sum(table(x)^3 - table(x))))
   tie_factor <- 1 - tie_sum / (N * (k^3 - k))
   Q <- if (tie_factor > 0) Q0 / tie_factor else 0
   F <- if (Q >= N * (k - 1)) Inf else (N - 1) * Q / (N * (k - 1) - Q)

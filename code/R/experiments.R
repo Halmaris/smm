@@ -31,7 +31,7 @@ additional_plan <- function(stage = 'core') {
 #' @return Method name; exact score ties retain the order M00, M10, M01.
 select_portfolio <- function(tuned) {
   methods <- c('M00', 'M10', 'M01')
-  scores <- vapply(tuned[methods], function(x) return(x$selection$score), 0)
+  scores <- vapply(tuned[methods], function(x) x$selection$score, 0)
   return(methods[which.max(scores)])
 }
 
@@ -72,7 +72,7 @@ run_additional <- function(inputs, scenario, replication, seed, stage = 'core', 
     core$scenario == scenario, core$replication == replication, core$tpe_seed == seed,
     identical(core$input_identity, attr(inputs, 'identity')))
   tuned <- setNames(lapply(seq_len(nrow(rows)), function(i)
-    return(tuner(inputs$train, rows$method[i], seed, rows$budget[i], rows$gamma_max[i]))), rows$method)
+    tuner(inputs$train, rows$method[i], seed, rows$budget[i], rows$gamma_max[i])), rows$method)
   evaluations <- list(); refits <- 0L
   if (stage == 'core') {
     selected <- select_portfolio(tuned)
@@ -116,6 +116,6 @@ run_ablation <- function(inputs, seed) {
   stopifnot(length(seed) %in% c(1L, 4L))
   seed <- rep(seed, length.out = 4L)
   tuned <- setNames(lapply(seq_along(methods), function(i)
-    return(tune_direct(inputs$train, methods[i], seed[i], budget = 100L))), methods)
-  return(list(tuned = tuned, evaluations = lapply(tuned, function(x) return(assess_choice(inputs, x$selection)))))
+    tune_direct(inputs$train, methods[i], seed[i], budget = 100L)), methods)
+  return(list(tuned = tuned, evaluations = lapply(tuned, function(x) assess_choice(inputs, x$selection))))
 }

@@ -64,11 +64,11 @@ fit_direct <- function(context, Cbar = 1, tau = .1, gamma = .1, max_iter = 30000
     out <- c(state, list(S_old = S, M_old = M, rho = rho, diagnostic_rho = rho))
     final <- assess(out)
   } else {
-    packed <- .smm_cached(context, 'design:fp32', function() return(smm_pack_fp32(design)))
+    packed <- .smm_cached(context, 'design:fp32', function() smm_pack_fp32(design))
     control <- list(family = 'direct', p = p, q = q, tau = tau, gamma = gamma, h = h,
       rho = rho, abs_tol = 1e-4, rel_tol = 1e-3, gap_tol = 1e-3, interval = 25L,
       center = numeric(d), relaxation = relaxation, refinement = 3L,
-      accept_fp64 = function(out) return(assess(out)$valid))
+      accept_fp64 = function(out) assess(out)$valid)
     final <- NULL
     repeat {
       control$max_iter <- as.integer(min(5000L, max_iter - used))
@@ -81,7 +81,7 @@ fit_direct <- function(context, Cbar = 1, tau = .1, gamma = .1, max_iter = 30000
         polished <- TRUE; polish_updates <- out$iterations
       } else out <- smm_admm_fp32(packed, packed, matrix(0, 0, 0), matrix(costs, n, 1),
         as.integer(yy), state, control,
-        function(rho) return(.smm_fp32_factor(context, gamma, rho, h, FALSE)),
+        function(rho) .smm_fp32_factor(context, gamma, rho, h, FALSE),
         .smm_fp32_inverse(context, gamma, 1))
       final <- assess(out); used <- used + out$iterations; chunks <- chunks + 1L
       if (final$valid || used >= max_iter) break
@@ -114,8 +114,8 @@ fit_direct <- function(context, Cbar = 1, tau = .1, gamma = .1, max_iter = 30000
 fit_ovr <- function(context, Cbar = 1, tau = .1, gamma = .1, max_iter = 300000L, relaxation = 1.5) {
   Z <- context$Z; n <- nrow(Z); d <- ncol(Z); p <- context$p; q <- context$q
   k <- length(context$labels$classes)
-  Y <- outer(as.character(context$y), as.character(context$labels$classes), function(a, b) return(ifelse(a == b, 1, -1)))
-  costs <- apply(Y, 2L, function(y) return(Cbar / (2 * ifelse(y > 0, sum(y > 0), sum(y < 0)))))
+  Y <- outer(as.character(context$y), as.character(context$labels$classes), function(a, b) ifelse(a == b, 1, -1))
+  costs <- apply(Y, 2L, function(y) Cbar / (2 * ifelse(y > 0, sum(y > 0), sum(y < 0))))
   h <- 1 / sqrt(max(1, mean(rowSums(context$Zc^2))))
   inverse <- .smm_cached_inverse(context, gamma, 1)
   assess <- function(out) {
@@ -125,11 +125,11 @@ fit_ovr <- function(context, Cbar = 1, tau = .1, gamma = .1, max_iter = 300000L,
     dr <- out$diagnostic_rho * sqrt(colSums((out$S - out$S_old + crossprod(Z, dz))^2) + colSums(dz)^2)
     pt <- sqrt(d + n) * 1e-4 + 1e-3 * pmax(sqrt(colSums(out$W^2) + colSums(margin^2)), sqrt(colSums(out$S^2) + colSums(out$M^2)))
     dt <- sqrt(d + 1) * 1e-4 + 1e-3 * out$rho * sqrt(colSums((out$U + h * crossprod(Z, Y * out$V))^2) + h^2 * colSums(Y * out$V)^2)
-    certificates <- lapply(seq_len(k), function(j) return(.smm_certificate(out$W[, j], out$b[j], Z, Y[, j],
+    certificates <- lapply(seq_len(k), function(j) .smm_certificate(out$W[, j], out$b[j], Z, Y[, j],
       costs[, j], p, q, tau, gamma, NULL, out$rho, out$U[, j], h * out$V[, j], inverse,
-      details = FALSE, roughness_fn = context$roughness_fn)))
-    gaps <- vapply(certificates, function(x) return(x$relative_gap), 0)
-    weak <- vapply(certificates, function(x) return(x$duality_gap >= -1e-10 * max(1, abs(x$objective), abs(x$dual_objective))), TRUE)
+      details = FALSE, roughness_fn = context$roughness_fn))
+    gaps <- vapply(certificates, function(x) x$relative_gap, 0)
+    weak <- vapply(certificates, function(x) x$duality_gap >= -1e-10 * max(1, abs(x$objective), abs(x$dual_objective)), TRUE)
     return(list(valid = all(pr <= pt & dr <= dt & gaps <= 1e-3 & weak), certificates = certificates,
       diagnostics = data.frame(relative_gap = gaps, primal_residual = pr, dual_residual = dr,
         primal_tolerance = pt, dual_tolerance = dt)))
@@ -140,20 +140,20 @@ fit_ovr <- function(context, Cbar = 1, tau = .1, gamma = .1, max_iter = 300000L,
     rho = 1, max_iter = as.integer(max_iter), abs_tol = 1e-4, rel_tol = 1e-3, gap_tol = 1e-3,
     adaptive_rho = TRUE, interval = 25L, center = context$center,
     relaxation = relaxation, refinement = 3L,
-    accept_fp64 = function(out) return(assess(out)$valid))
+    accept_fp64 = function(out) assess(out)$valid)
   out <- smm_admm_fp32(Z, context$Zc, Y, costs, integer(), initial, control,
-    function(rho) return(.smm_fp32_factor(context, gamma, rho, h, TRUE)), .smm_fp32_inverse(context, gamma, 1))
+    function(rho) .smm_fp32_factor(context, gamma, rho, h, TRUE), .smm_fp32_inverse(context, gamma, 1))
   final <- assess(out)
   if (!final$valid) stop('OvR solver did not meet its numerical acceptance criteria.')
   # Canonicalize flat intercept minima and analytically certified zero columns.
   G <- crossprod(Z, Y * costs)
   zero <- vapply(seq_len(k), function(j)
-    return(svd(matrix(G[, j], p, q), nu = 0, nv = 0)$d[1L] <= tau * (1 - 1e-12)), TRUE)
+    svd(matrix(G[, j], p, q), nu = 0, nv = 0)$d[1L] <= tau * (1 - 1e-12), TRUE)
   out$W[, zero] <- 0
   raw <- Z %*% out$W
   old_b <- out$b
   out$b <- vapply(seq_len(k), function(j)
-    return(minimum_norm_intercept(raw[, j], Y[, j], costs[, j])), 0)
+    minimum_norm_intercept(raw[, j], Y[, j], costs[, j]), 0)
   for (j in seq_len(k)) {
     cert <- final$certificates[[j]]
     new_objective <- if (zero[j]) sum(costs[, j]) else cert$objective +

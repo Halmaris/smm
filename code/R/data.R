@@ -5,11 +5,11 @@
 #' @return A list containing the vectorized observations and matrix dimensions.
 .smm_pack <- function(X) {
   if (is.array(X) && length(dim(X)) == 3L)
-    X <- lapply(seq_len(dim(X)[3]), function(i) return(matrix(X[, , i], nrow = dim(X)[1], ncol = dim(X)[2])))
+    X <- lapply(seq_len(dim(X)[3]), function(i) matrix(X[, , i], nrow = dim(X)[1], ncol = dim(X)[2]))
   if (!is.list(X) || !length(X) || !all(vapply(X, is.matrix, TRUE)))
     stop('X must be a nonempty list of matrices or a three-dimensional array.')
   dims <- dim(X[[1]])
-  stopifnot(all(vapply(X, function(x) return(is.numeric(x) && identical(dim(x), dims)), TRUE)))
+  stopifnot(all(vapply(X, function(x) is.numeric(x) && identical(dim(x), dims), TRUE)))
   Z <- t(vapply(X, as.vector, numeric(prod(dims))))
   if (!all(is.finite(Z))) stop('Predictors must be finite and complete.')
   return(list(X = Z, p = dims[1], q = dims[2]))
@@ -45,7 +45,7 @@ smm_context <- function(X, y, structure = 'temporal', standardize = TRUE, channe
       height <- nrow(W) / channels
       return(sum(vapply(seq_len(channels), function(j) {
         plane <- W[seq_len(height) + (j - 1L) * height, , drop = FALSE]
-        return(sum(diff(plane)^2) + sum(diff(t(plane))^2))
+        sum(diff(plane)^2) + sum(diff(t(plane))^2)
       }, 0)))
     }
   } else {
@@ -101,6 +101,6 @@ stratified_folds <- function(y, seed, folds = 5L) {
 ba_upper_bound <- function(truth, prediction) {
   return(mean(vapply(unique(as.character(truth)), function(label) {
     ids <- as.character(truth) == label
-    return(1 - sum(prediction[ids] != label, na.rm = TRUE) / sum(ids))
+    1 - sum(prediction[ids] != label, na.rm = TRUE) / sum(ids)
   }, 0)))
 }

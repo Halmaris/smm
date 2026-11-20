@@ -188,13 +188,13 @@ shrinkage <- function(X, tau) {
 #' @param gamma Nonnegative quadratic adjacency penalty.
 #' @param diagonal Positive diagonal term in the quadratic operator.
 .smm_cached_inverse <- function(context, gamma, diagonal) {
-  if (gamma == 0) return(function(rhs) return(rhs / diagonal))
+  if (gamma == 0) return(function(rhs) rhs / diagonal)
   p <- context$p; q <- context$q
   key <- paste('inverse', gamma, diagonal, sep = ':')
-  return(.smm_cached(context, key, function() {
+  build_inverse <- function() {
     if (identical(context$structure, 'spatial'))
       return(.smm_spatial_inverse(context, gamma, diagonal))
-    penalty <- .smm_cached(context, 'banded_penalty', function() return(.smm_banded_penalty(q)))
+    penalty <- .smm_cached(context, 'banded_penalty', function() .smm_banded_penalty(q))
     H <- Diagonal(q, diagonal) + 2 * gamma * penalty
     factor <- Cholesky(H, perm = FALSE, LDL = FALSE, super = FALSE)
     return(function(rhs) {
@@ -203,9 +203,10 @@ shrinkage <- function(X, tau) {
       blocks <- matrix(aperm(array(M, c(p, q, ncol(M))), c(2L, 1L, 3L)), nrow = q)
       solved <- as.matrix(Matrix::solve(factor, blocks, system = 'A'))
       answer <- matrix(aperm(array(solved, c(q, p, ncol(M))), c(2L, 1L, 3L)), nrow = p * q)
-      return(if (vector_rhs) as.vector(answer) else answer)
+      if (vector_rhs) as.vector(answer) else answer
     })
-  }))
+  }
+  return(.smm_cached(context, key, build_inverse))
 }
 
 #' Build a primal or Woodbury solve for the ADMM coefficient update.
@@ -216,12 +217,12 @@ shrinkage <- function(X, tau) {
 #' @param centered Whether to use the centered design required for a free intercept.
 .smm_cached_solver <- function(context, gamma, rho, h, centered) {
   key <- paste('solver', gamma, rho, format(h, digits = 17), centered, sep = ':')
-  return(.smm_cached(context, key, function() {
+  build_solver <- function() {
     X <- if (centered) context$Zc else context$Z
     n <- nrow(X); d <- ncol(X); p <- context$p; q <- context$q
     diagonal <- 1 + rho
     gram <- .smm_cached(context, paste0('gram:', centered), function()
-      return(if (d <= n) crossprod(X) else tcrossprod(X)))
+      if (d <= n) crossprod(X) else tcrossprod(X))
     if (d <= n) {
       H <- diagonal * diag(d)
       if (gamma > 0) {
@@ -229,25 +230,26 @@ shrinkage <- function(X, tau) {
           H <- H + 2 * gamma * (kronecker(diag(q), context$row_laplacian) +
             kronecker(context$column_laplacian, diag(p)))
         } else {
-          penalty <- .smm_cached(context, 'banded_penalty', function() return(.smm_banded_penalty(q)))
+          penalty <- .smm_cached(context, 'banded_penalty', function() .smm_banded_penalty(q))
           H <- H + 2 * gamma * kronecker(as.matrix(penalty), diag(p))
         }
       }
       R <- chol(H + rho * h^2 * gram)
-      return(function(rhs) return(.smm_chol_solve(R, rhs)))
+      return(function(rhs) .smm_chol_solve(R, rhs))
     }
     if (gamma == 0) {
       R <- chol(diag(n) / (rho * h^2) + gram / diagonal)
-      return(function(rhs) return(rhs / diagonal - crossprod(X,
-        .smm_chol_solve(R, X %*% rhs)) / diagonal^2))
+      return(function(rhs) rhs / diagonal - crossprod(X,
+        .smm_chol_solve(R, X %*% rhs)) / diagonal^2)
     }
     inverse <- .smm_cached_inverse(context, gamma, diagonal)
     V <- inverse(t(X)); R <- chol(diag(n) / (rho * h^2) + X %*% V)
     return(function(rhs) {
       a <- inverse(rhs)
-      return(a - V %*% .smm_chol_solve(R, X %*% a))
+      a - V %*% .smm_chol_solve(R, X %*% a)
     })
-  }))
+  }
+  return(.smm_cached(context, key, build_solver))
 }
 #' Apply a Kronecker operator through left and right matrix products.
 #' @param rhs Vector or matrix of right-hand sides.
@@ -270,13 +272,13 @@ shrinkage <- function(X, tau) {
   spectrum <- .smm_cached(context, 'spatial-spectrum', function() {
     r <- eigen(context$row_laplacian, symmetric = TRUE)
     c <- eigen(context$column_laplacian, symmetric = TRUE)
-    return(list(row = r$vectors, column = c$vectors,
-      values = as.vector(outer(pmax(r$values, 0), pmax(c$values, 0), '+'))))
+    list(row = r$vectors, column = c$vectors,
+      values = as.vector(outer(pmax(r$values, 0), pmax(c$values, 0), '+')))
   })
   denominator <- diagonal + 2 * gamma * spectrum$values
   return(function(rhs) {
     transformed <- .smm_two_sided_action(rhs, t(spectrum$row), t(spectrum$column))
-    return(.smm_two_sided_action(transformed / denominator, spectrum$row, spectrum$column))
+    .smm_two_sided_action(transformed / denominator, spectrum$row, spectrum$column)
   })
 }
 # Multiclass certification and refinement -------------------------------
@@ -298,9 +300,9 @@ shrinkage <- function(X, tau) {
                                          rho, U, V, inverse_H, raw_scores = NULL) {
   k <- ncol(W); p <- context$p; q <- context$q
   nuclear <- sum(vapply(seq_len(k), function(j)
-    return(sum(svd(matrix(W[, j], p, q), nu = 0L, nv = 0L)$d)), numeric(1)))
+    sum(svd(matrix(W[, j], p, q), nu = 0L, nv = 0L)$d), numeric(1)))
   roughness <- sum(vapply(seq_len(k), function(j)
-    return(context$roughness_fn(matrix(W[, j], p, q))), numeric(1)))
+    context$roughness_fn(matrix(W[, j], p, q)), numeric(1)))
   primal <- sum(W^2) / 2 + tau * nuclear + gamma * roughness +
     sum(costs * .msmm_loss(if (is.null(raw_scores)) X %*% W else raw_scores, y))
   B <- pmax(rho * V, 0)
@@ -338,7 +340,7 @@ shrinkage <- function(X, tau) {
   B <- matrix(costs/(k-1L), n, k)
   B[cbind(seq_len(n), y)] <- -costs
   N <- -crossprod(X,B)
-  norms <- vapply(seq_len(k),function(j) return(svd(matrix(N[,j],p,q),nu = 0,nv = 0)$d[1]),numeric(1))
+  norms <- vapply(seq_len(k),function(j) svd(matrix(N[,j],p,q),nu = 0,nv = 0)$d[1],numeric(1))
   if (!all(norms <= tau*(1-1e-12))) return(NULL)
   return(list(B = B,N = N))
 }
@@ -410,15 +412,16 @@ shrinkage <- function(X, tau) {
 .smm_fp32_factor <- function(context, gamma, rho, h, centered) {
   key <- paste('solver:fp32', format(gamma, digits = 17), format(rho, digits = 17),
     format(h, digits = 17), centered, sep = ':')
-  return(.smm_cached(context, key, function() {
+  build_factor <- function() {
     X <- if (centered) context$Zc else context$Z
     gram <- .smm_cached(context, paste0('gram:fp32:', centered),
-      function() return(smm_gram_fp32(X)))
+      function() smm_gram_fp32(X))
     blocks <- if (is.null(context$row_blocks)) 1L else context$row_blocks
     if (blocks>1L) return(smm_factor_fp32(X,gram,context$p,context$q,gamma,rho,h,
       spatial = TRUE,row_blocks = blocks))
     return(smm_factor_fp32(X, gram, context$p, context$q, gamma, rho, h, spatial = identical(context$structure, 'spatial')))
-  }))
+  }
+  return(.smm_cached(context, key, build_factor))
 }
 
 #' Build or reuse the single-precision quadratic penalty inverse.
@@ -426,11 +429,12 @@ shrinkage <- function(X, tau) {
 #' @param gamma Nonnegative quadratic adjacency penalty.
 #' @param diagonal Positive diagonal term in the quadratic operator.
 .smm_fp32_inverse <- function(context, gamma, diagonal) {
+  build_inverse <- function() {
+    blocks <- if (is.null(context$row_blocks)) 1L else context$row_blocks
+    if (blocks>1L) return(smm_inverse_fp32(context$p,context$q,gamma,diagonal,
+      spatial = TRUE,row_blocks = blocks))
+    return(smm_inverse_fp32(context$p, context$q, gamma, diagonal, spatial = identical(context$structure, 'spatial')))
+  }
   return(.smm_cached(context, paste('native_inverse32', format(gamma, digits = 17),
-    format(diagonal, digits = 17), sep = ':'), function() {
-      blocks <- if (is.null(context$row_blocks)) 1L else context$row_blocks
-      if (blocks>1L) return(smm_inverse_fp32(context$p,context$q,gamma,diagonal,
-        spatial = TRUE,row_blocks = blocks))
-      return(smm_inverse_fp32(context$p, context$q, gamma, diagonal, spatial = identical(context$structure, 'spatial')))
-    }))
+    format(diagonal, digits = 17), sep = ':'), build_inverse))
 }

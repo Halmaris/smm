@@ -47,15 +47,15 @@ mc_coefficients <- function(cfg, job, replication, scenario) {
   E <- eigen(H, symmetric = TRUE)$vectors[, seq_len(K - 1L), drop = FALSE]
   A <- sqrt(K / (K - 1L)) * mc_orthogonal(r * r, K - 1L) %*% t(E)
   W <- vapply(seq_len(K), function(k)
-    return(as.vector(U %*% matrix(A[, k], r, r) %*% t(V))), numeric(cfg$p * cfg$T))
+    as.vector(U %*% matrix(A[, k], r, r) %*% t(V)), numeric(cfg$p * cfg$T))
   target <- (K / (K - 1L)) * H
   stopifnot(max(abs(crossprod(W) - target)) < 1e-10,
     max(abs(rowSums(W))) < 1e-10,
     all(vapply(seq_len(K), function(k)
-      return(qr(matrix(W[, k], cfg$p, cfg$T), tol = 1e-9)$rank), 0L) == r))
+      qr(matrix(W[, k], cfg$p, cfg$T), tol = 1e-9)$rank, 0L) == r))
   return(list(W = W, gram = crossprod(W),
     roughness = vapply(seq_len(K), function(k)
-      return(sum((matrix(W[, k], cfg$p, cfg$T) %*% t(mc_D(cfg$T)))^2)), 0)))
+      sum((matrix(W[, k], cfg$p, cfg$T) %*% t(mc_D(cfg$T)))^2), 0)))
 }
 
 #' Sample observations with fixed class counts by conditional rejection.
@@ -85,7 +85,7 @@ mc_sample <- function(cfg, job, truth, per_class, seed, prefix) {
   }
   Z <- do.call(rbind, accepted); y <- rep(seq_len(K), each = per_class)
   order <- sample.int(length(y)); Z <- Z[order, , drop = FALSE]; y <- y[order]
-  return(list(X = lapply(seq_len(nrow(Z)), function(i) return(matrix(Z[i, ], cfg$p, cfg$T))),
+  return(list(X = lapply(seq_len(nrow(Z)), function(i) matrix(Z[i, ], cfg$p, cfg$T)),
     y = factor(y, levels = seq_len(K)), sample_id = paste0(prefix, seq_along(y)),
     candidate_draws = draws, sampling = 'fixed class counts by conditional rejection'))
 }
@@ -138,7 +138,7 @@ mc_structure <- function(fit) {
   }
   pairs <- combn(ncol(fit$W), 2L)
   return(list(classes = apply(fit$W, 2L, one), contrasts = vapply(seq_len(ncol(pairs)),
-    function(j) return(one(fit$W[, pairs[1L, j]] - fit$W[, pairs[2L, j]])), numeric(2)),
+    function(j) one(fit$W[, pairs[1L, j]] - fit$W[, pairs[2L, j]]), numeric(2)),
     coordinates = 'training-standardized; scale invariant summaries, not coefficient recovery'))
 }
 # Binary simulation design ----------------------------------------------
@@ -187,16 +187,16 @@ simulate_smm <- function(n_train, n_test = 2000L, p = 8L, T = 32L,
   # Reset after constructing W so paired scenarios use the same input matrices.
   set.seed(seed + 1L)
   X <- lapply(seq_len(n_train + n_test), function(i)
-    return(row_root %*% matrix(rnorm(p * T), p, T) %*% t(time_root)))
-  eta <- vapply(X, function(x) return(sum(x * W)), numeric(1))
+    row_root %*% matrix(rnorm(p * T), p, T) %*% t(time_root))
+  eta <- vapply(X, function(x) sum(x * W), numeric(1))
   probability <- plogis(eta)
   y <- ifelse(runif(length(X)) < probability, 1L, -1L)
   flip <- runif(length(X)) < label_flip
   y[flip] <- -y[flip]
   effective_probability <- label_flip + (1 - 2 * label_flip) * probability
   indices <- list(train = seq_len(n_train), test = n_train + seq_len(n_test))
-  samples <- lapply(indices, function(i) return(list(X = X[i], y = factor(y[i], levels = c(-1, 1)),
-    probability = effective_probability[i], linear_predictor = eta[i])))
+  samples <- lapply(indices, function(i) list(X = X[i], y = factor(y[i], levels = c(-1, 1)),
+    probability = effective_probability[i], linear_predictor = eta[i]))
   return(c(samples, list(W = W, coefficient_shape = shape, D = D,
     row_covariance = row_covariance, time_covariance = time_covariance,
     settings = list(n_train = n_train, n_test = n_test, p = p, T = T, rank = rank,
