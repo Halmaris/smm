@@ -45,6 +45,29 @@ The command uses the compact model implementation in this repository. Historical
 runtime measurements refer to their recorded solver implementations and hardware.
 The optional follow-up experiments are documented separately in [SIMULATIONS.md](SIMULATIONS.md).
 
+## Temporal OvR timing initializer
+
+The timed temporal OvR refits used the archived [initializer](../timing/library_initialization.R).
+It checks the nuclear-norm optimality condition for a zero start class by class.
+For linear SVM starts it uses inverse-frequency class weights, cost `Cbar / n`,
+tolerance `1e-8`, no internal scaling or shrinking, and a 256 MB LIBSVM cache.
+The compact OvR fitter uses a zero start. To obtain the original ADMM starting
+state for a training partition, run from `code/`:
+
+```r
+source('timing/context.R')
+source('timing/library_initialization.R')
+context <- smm_fit_context(X_train, y_train)
+start <- smm_library_initial(context, list(Cbar = C, tau = tau, gamma = gamma))
+```
+
+Supply training observations as a list of channel-by-time matrices, or as a
+channel-by-time-by-observation array, with one class label per observation.
+Use the selected values of `C`, `tau` and `gamma` for that refit. Create a fresh
+context for each independent refit. The return value contains the primal and dual
+starting variables for the historical solver. The two files use `digest`,
+`Matrix` and `e1071` from the project environment.
+
 ## Analysing saved results
 
 These commands read CSV files and fit no models. Use a new or empty output directory.
