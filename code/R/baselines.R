@@ -5,10 +5,10 @@
 #' @param r Retained basis dimension.
 .benchmark_basis <- function(T, r) {
   if (r > T || r < 1) stop('Invalid temporal basis dimension.')
-  basis <- outer((seq_len(T) - 0.5) / T, 0:(r - 1L), function(t, k) cos(pi * t * k))
+  basis <- outer((seq_len(T) - 0.5) / T, 0:(r - 1L), function(t, k) return(cos(pi * t * k)))
   basis[, 1L] <- 1 / sqrt(T)
   if (r > 1L) basis[, 2:r] <- basis[, 2:r, drop = FALSE] * sqrt(2 / T)
-  basis
+  return(basis)
 }
 
 #' Apply the mean/trend or truncated-cosine temporal representation.
@@ -19,13 +19,13 @@
   T <- ncol(X[[1L]])
   if (method == 'summary_svm') {
     t <- seq_len(T) - mean(seq_len(T))
-    return(lapply(X, function(x) cbind(rowMeans(x), as.vector(x %*% t / sum(t^2)))))
+    return(lapply(X, function(x) return(cbind(rowMeans(x), as.vector(x %*% t / sum(t^2))))))
   }
   if (method == 'functional_svm') {
     basis <- .benchmark_basis(T, parameters$components)
-    return(lapply(X, function(x) x %*% basis))
+    return(lapply(X, function(x) return(x %*% basis)))
   }
-  X
+  return(X)
 }
 
 #' Shrink a covariance estimate toward a scaled identity.
@@ -34,7 +34,7 @@
 .benchmark_shrink <- function(S, lambda) {
   target <- mean(diag(S))
   if (target <= .Machine$double.eps) target <- 1
-  (1 - lambda) * S + lambda * target * diag(nrow(S))
+  return((1 - lambda) * S + lambda * target * diag(nrow(S)))
 }
 
 #' Accumulate covariance terms in observation order (R double precision).
@@ -43,7 +43,7 @@
 covariance_sum <- function(E, operation) {
   value <- operation(E[[1L]])
   if (length(E) > 1L) for (i in 2:length(E)) value <- value + operation(E[[i]])
-  value
+  return(value)
 }
 
 # Comparator fitting and prediction -------------------------------------
@@ -59,8 +59,8 @@ fit_comparator <- function(X, y, method, parameters) {
   labels <- context$labels
   Z <- preprocessing$X
   matrices <- if (method %in% c('summary_svm', 'functional_svm'))
-    lapply(seq_len(nrow(Z)), function(i) matrix(Z[i, ], p, q)) else NULL
-  cached <- function(key, build) if (is.null(context)) build() else .smm_cached(context, key, build)
+    lapply(seq_len(nrow(Z)), function(i) return(matrix(Z[i, ], p, q))) else NULL
+  cached <- function(key, build) return(if (is.null(context)) build() else .smm_cached(context, key, build))
   classes <- labels$classes
   group <- match(y, classes)
   n <- length(y); k <- length(classes)
@@ -73,19 +73,18 @@ fit_comparator <- function(X, y, method, parameters) {
       Cbar = parameters$Cbar, tau = 0, gamma = 0, relaxation = 1)
     model$converged <- model$fit$converged
   } else if (method == 'rbf_svm') {
-    stopifnot(requireNamespace('e1071', quietly = TRUE))
     median_distance <- cached('median_distance', function() {
       distances <- as.numeric(dist(Z))^2
       value <- median(distances[distances > 0])
-      if (is.finite(value)) value else 1
+      return(if (is.finite(value)) value else 1)
     })
     model$kernel_gamma <- parameters$bandwidth_multiplier / median_distance
     model$fits <- lapply(classes, function(label) {
       signed <- factor(ifelse(y == label, 1, -1), levels = c(-1, 1))
       weights <- n / (2 * table(signed))
-      e1071::svm(Z, signed, kernel = 'radial', gamma = model$kernel_gamma,
+      return(svm(Z, signed, kernel = 'radial', gamma = model$kernel_gamma,
                   cost = parameters$Cbar / n, class.weights = weights,
-                  scale = FALSE, tolerance = 1e-4, shrinking = TRUE, cachesize = 256)
+                  scale = FALSE, tolerance = 1e-4, shrinking = TRUE, cachesize = 256))
     })
     for (j in seq_along(model$fits)) {
       fit <- model$fits[[j]]
@@ -98,8 +97,8 @@ fit_comparator <- function(X, y, method, parameters) {
     }
   } else if (method %in% c('shrinkage_lda', 'separable_lda')) {
     means <- cached('class_means', function()
-      do.call(rbind, lapply(seq_len(k), function(j) colMeans(Z[group == j, , drop = FALSE]))))
-    residual <- cached('class_residual', function() Z - means[group, , drop = FALSE])
+      return(do.call(rbind, lapply(seq_len(k), function(j) return(colMeans(Z[group == j, , drop = FALSE]))))))
+    residual <- cached('class_residual', function() return(Z - means[group, , drop = FALSE]))
     model$means <- means
     model$log_priors <- rep(-log(k), k)
     if (method == 'shrinkage_lda') {
@@ -108,13 +107,13 @@ fit_comparator <- function(X, y, method, parameters) {
         if (target <= .Machine$double.eps) target <- 1
         diagonal <- parameters$lambda * target
         U <- residual * sqrt((1 - parameters$lambda) / (n - k))
-        gram <- cached('lda_gram', function() tcrossprod(residual) / (n - k))
+        gram <- cached('lda_gram', function() return(tcrossprod(residual) / (n - k)))
         R <- chol(diag(n) + (1 - parameters$lambda) * gram / diagonal)
         model$weights <- t(means) / diagonal - crossprod(U,
           .smm_chol_solve(R, U %*% t(means))) / diagonal^2
         model$linear_solver <- 'woodbury'
       } else {
-        covariance <- cached('lda_covariance', function() crossprod(residual) / (n - k))
+        covariance <- cached('lda_covariance', function() return(crossprod(residual) / (n - k)))
         covariance <- .benchmark_shrink(covariance, parameters$lambda)
         model$precision <- chol2inv(chol(covariance))
         model$weights <- model$precision %*% t(means)
@@ -123,9 +122,9 @@ fit_comparator <- function(X, y, method, parameters) {
       model$offset <- -rowSums(means * t(model$weights)) / 2 + model$log_priors
     } else {
       covariances <- cached('separable_covariances', function() {
-        E <- lapply(seq_len(n), function(i) matrix(residual[i, ], p, q))
-        list(rows = covariance_sum(E, tcrossprod) / ((n - k) * q),
-             times = covariance_sum(E, crossprod) / ((n - k) * p))
+        E <- lapply(seq_len(n), function(i) return(matrix(residual[i, ], p, q)))
+        return(list(rows = covariance_sum(E, tcrossprod) / ((n - k) * q),
+             times = covariance_sum(E, crossprod) / ((n - k) * p)))
       })
       rows <- covariances$rows; times <- covariances$times
       time_scale <- mean(diag(times))
@@ -135,14 +134,14 @@ fit_comparator <- function(X, y, method, parameters) {
       model$row_precision <- chol2inv(chol(model$row_covariance))
       model$time_precision <- chol2inv(chol(model$time_covariance))
       model$weights <- vapply(seq_len(k), function(j) {
-        as.vector(model$row_precision %*% matrix(means[j, ], p, q) %*% model$time_precision)
+        return(as.vector(model$row_precision %*% matrix(means[j, ], p, q) %*% model$time_precision))
       }, numeric(p * q))
       model$offset <- -rowSums(means * t(model$weights)) / 2 + model$log_priors
     }
   } else stop('Unknown comparator: ', method)
   class(model) <- 'smm_comparator'
   if (!model$converged) stop('Nonconverged comparator: ', method)
-  model
+  return(model)
 }
 
 #' Predict labels or scores using training-estimated comparator preprocessing.
@@ -155,17 +154,15 @@ predict_comparator <- function(object, newdata, type = c('class', 'decision')) {
   stopifnot(packed$p == object$p, packed$q == object$q)
   Z <- sweep(sweep(packed$X, 2L, rep(object$center, object$q), '-'),
              2L, rep(object$scale, object$q), '/')
-  matrices <- lapply(seq_len(nrow(Z)), function(i) matrix(Z[i, ], object$p, object$q))
+  matrices <- lapply(seq_len(nrow(Z)), function(i) return(matrix(Z[i, ], object$p, object$q)))
   if (object$method %in% c('summary_svm', 'functional_svm')) {
     inputs <- .benchmark_transform(matrices, object$method, object$parameters)
     scores <- predict_model(object$fit, inputs, type = 'decision')
   } else if (object$method == 'rbf_svm') {
-    if (!requireNamespace('e1071', quietly = TRUE))
-      stop('Package e1071 is required to predict from an RBF SVM.')
     scores <- vapply(object$fits, function(fit) {
       prediction <- predict(fit, Z, decision.values = TRUE)
       orientation <- if (fit$levels[fit$labels[1L]] == '1') 1 else -1
-      as.vector(attr(prediction, 'decision.values')) * orientation
+      return(as.vector(attr(prediction, 'decision.values')) * orientation)
     }, numeric(nrow(Z)))
     scores <- matrix(scores, nrow = nrow(Z), ncol = length(object$classes))
   } else scores <- sweep(Z %*% object$weights, 2L, object$offset, '+')
@@ -173,5 +170,5 @@ predict_comparator <- function(object, newdata, type = c('class', 'decision')) {
   if (type == 'decision') return(scores)
   tolerance <- 64 * .Machine$double.eps * pmax(1, apply(abs(scores), 1L, max))
   labels <- object$classes[max.col(scores >= apply(scores, 1L, max) - tolerance, ties.method = 'first')]
-  if (object$factor_labels) factor(labels, levels = object$classes) else labels
+  return(if (object$factor_labels) factor(labels, levels = object$classes) else labels)
 }

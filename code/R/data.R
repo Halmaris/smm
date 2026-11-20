@@ -5,14 +5,14 @@
 #' @return A list containing the vectorized observations and matrix dimensions.
 .smm_pack <- function(X) {
   if (is.array(X) && length(dim(X)) == 3L)
-    X <- lapply(seq_len(dim(X)[3]), function(i) matrix(X[, , i], nrow = dim(X)[1], ncol = dim(X)[2]))
+    X <- lapply(seq_len(dim(X)[3]), function(i) return(matrix(X[, , i], nrow = dim(X)[1], ncol = dim(X)[2])))
   if (!is.list(X) || !length(X) || !all(vapply(X, is.matrix, TRUE)))
     stop('X must be a nonempty list of matrices or a three-dimensional array.')
   dims <- dim(X[[1]])
-  stopifnot(all(vapply(X, function(x) is.numeric(x) && identical(dim(x), dims), TRUE)))
+  stopifnot(all(vapply(X, function(x) return(is.numeric(x) && identical(dim(x), dims)), TRUE)))
   Z <- t(vapply(X, as.vector, numeric(prod(dims))))
   if (!all(is.finite(Z))) stop('Predictors must be finite and complete.')
-  list(X = Z, p = dims[1], q = dims[2])
+  return(list(X = Z, p = dims[1], q = dims[2]))
 }
 
 #' Prepare training-only scaling and the structural operator for one partition.
@@ -38,21 +38,21 @@ smm_context <- function(X, y, structure = 'temporal', standardize = TRUE, channe
   context$structure <- structure; context$row_blocks <- as.integer(channels)
   context$cache <- new.env(parent = emptyenv())
   if (structure == 'spatial') {
-    laplacian <- function(n) if (n < 2L) matrix(0, n, n) else crossprod(diff(diag(n)))
+    laplacian <- function(n) return(if (n < 2L) matrix(0, n, n) else crossprod(diff(diag(n))))
     context$row_laplacian <- kronecker(diag(channels), laplacian(packed$p / channels))
     context$column_laplacian <- laplacian(packed$q)
     context$roughness_fn <- function(W) {
       height <- nrow(W) / channels
-      sum(vapply(seq_len(channels), function(j) {
+      return(sum(vapply(seq_len(channels), function(j) {
         plane <- W[seq_len(height) + (j - 1L) * height, , drop = FALSE]
-        sum(diff(plane)^2) + sum(diff(t(plane))^2)
-      }, 0))
+        return(sum(diff(plane)^2) + sum(diff(t(plane))^2))
+      }, 0)))
     }
   } else {
     D <- if (packed$q < 3L) matrix(0, 0, packed$q) else diff(diag(packed$q), differences = 2L)
-    context$roughness_fn <- function(W) sum((W %*% t(D))^2)
+    context$roughness_fn <- function(W) return(sum((W %*% t(D))^2))
   }
-  context
+  return(context)
 }
 
 #' Reuse a matrix factorization within one training partition.
@@ -74,7 +74,7 @@ smm_context <- function(X, y, structure = 'temporal', standardize = TRUE, channe
     }
     context$cache_order <- c(order, key)
   }
-  value <- build(); assign(key, value, context$cache); value
+  value <- build(); assign(key, value, context$cache); return(value)
 }
 
 # Cross-validation and pruning ------------------------------------------
@@ -91,7 +91,7 @@ stratified_folds <- function(y, seed, folds = 5L) {
     ids <- which(y == label)
     answer[ids] <- sample(rep(seq_len(folds), length.out = length(ids)))
   }
-  answer
+  return(answer)
 }
 
 #' Bound pooled balanced accuracy after an incomplete set of validation folds.
@@ -99,8 +99,8 @@ stratified_folds <- function(y, seed, folds = 5L) {
 #' @param prediction Out-of-fold predictions; NA denotes an unprocessed observation.
 #' @return The optimistic BA achievable if all remaining predictions are correct.
 ba_upper_bound <- function(truth, prediction) {
-  mean(vapply(unique(as.character(truth)), function(label) {
+  return(mean(vapply(unique(as.character(truth)), function(label) {
     ids <- as.character(truth) == label
-    1 - sum(prediction[ids] != label, na.rm = TRUE) / sum(ids)
-  }, 0))
+    return(1 - sum(prediction[ids] != label, na.rm = TRUE) / sum(ids))
+  }, 0)))
 }

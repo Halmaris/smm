@@ -15,11 +15,11 @@ tune_direct <- function(train, method = 'M11', seed = 91001L, budget = 100L,
   stopifnot(length(train$X) == length(train$y), length(train$folds) == length(train$y),
     is.factor(train$y), !anyNA(train$folds), setequal(train$folds, 1:5),
     all(table(train$y, train$folds) > 0))
-  py <- reticulate::import_from_path('tpe', file.path(.repo, 'python'))
+  py <- import_from_path('tpe', file.path(.repo, 'python'))
   search <- py$Search(method, as.integer(seed), as.integer(budget), gamma_max)
   contexts <- lapply(1:5, function(fold) {
     ids <- which(train$folds != fold)
-    smm_context(train$X[ids], train$y[ids], structure, channels = channels)
+    return(smm_context(train$X[ids], train$y[ids], structure, channels = channels))
   })
   records <- vector('list', budget)
   for (i in seq_len(budget)) {
@@ -41,8 +41,8 @@ tune_direct <- function(train, method = 'M11', seed = 91001L, budget = 100L,
       anchor = request$anchor, status = if (pruned) 'pruned' else 'complete',
       score = score, folds = fold)
   }
-  list(selection = search$best(), trials = do.call(rbind, records), method = method,
-    seed = seed, gamma_max = gamma_max)
+  return(list(selection = search$best(), trials = do.call(rbind, records), method = method,
+    seed = seed, gamma_max = gamma_max))
 }
 
 #' Select a fixed-parameter model using pooled CV, without a TEST dependency.
@@ -63,7 +63,7 @@ select_grid <- function(X, y, folds, candidates, fit, predict) {
       model <- fit(X[-ids], y[-ids], as.list(candidates[j, , drop = FALSE]))
       pred[ids] <- as.character(predict(model, X[ids]))
     }
-    mc_metrics(y, pred)$BA
+    return(mc_metrics(y, pred)$BA)
   }, 0)
-  list(index = which.max(scores), scores = scores)
+  return(list(index = which.max(scores), scores = scores))
 }

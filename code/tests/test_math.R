@@ -38,20 +38,20 @@ plan <- m$additional_plan()
 stopifnot(nrow(plan) == 240, sum(plan$budget) == 12000,
   nrow(m$additional_plan('boundary')) == 40, sum(m$additional_plan('boundary')$budget) == 2660)
 # Mock fitting validates orchestration without spending a research budget.
-train <- list(X=X,y=y,folds=m$stratified_folds(y,7))
-inputs <- list(train=train,test=list(X=X,y=y));attr(inputs,'identity') <- 'synthetic-test'
+train <- list(X = X,y = y,folds = m$stratified_folds(y,7))
+inputs <- list(train = train,test = list(X = X,y = y));attr(inputs,'identity') <- 'synthetic-test'
 tuner <- function(train,method,seed,budget,gamma_max) {
-  list(selection=list(score=if(method=='M00') .8 else .7, parameters=list(method=method,gamma_max=gamma_max)),
-    budget=budget, method=method)
+  return(list(selection = list(score = if(method=='M00') .8 else .7, parameters = list(method = method,gamma_max = gamma_max)),
+    budget = budget, method = method))
 }
-assessor <- function(inputs,choice) list(BA=.75,macro_F1=.7)
-core <- m$run_additional(inputs,'s09',1,91001,tuner=tuner,assessor=assessor)
+assessor <- function(inputs,choice) return(list(BA = .75,macro_F1 = .7))
+core <- m$run_additional(inputs,'s09',1,91001,tuner = tuner,assessor = assessor)
 boundary <- m$run_additional(inputs,'s09',1,91001,'boundary',core,tuner,assessor)
 stopifnot(core$refits==2,core$comparison$selected=='M00',boundary$refits==3)
 core$evaluations$M01 <- core$evaluations$M00
 stopifnot(m$run_additional(inputs,'s09',1,91001,'boundary',core,tuner,assessor)$refits==2)
 # A paired analysis has ten independent replication means, not twenty seed units.
-df <- expand.grid(scenario=c('s09','s13','s15'),replication=1:10,tpe_seed=c(91001L,91002L))
+df <- expand.grid(scenario = c('s09','s13','s15'),replication = 1:10,tpe_seed = c(91001L,91002L))
 df$contrast <- 'M11 - CV-selected portfolio';df$BA_difference <- sin(df$replication)/100
 df$F1_difference <- cos(df$replication)/100
 summary <- m$summarize_additional(df)

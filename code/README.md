@@ -5,6 +5,8 @@ Run the examples from `code/`. Installation and environment variables are in the
 lockfiles and local libraries. The API uses one native FP32 ADMM backend with FP64
 numerical checks; functions document their purpose and parameters in English.
 
+The loader attaches the packages listed in `R/libraries.R`. Standalone analysis scripts use the same imports.
+
 ## Classification
 
 ```r

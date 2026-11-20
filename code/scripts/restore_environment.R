@@ -31,7 +31,7 @@ configure_macos_build <- function(directory) {
   Sys.unsetenv(c('CPATH', 'LIBRARY_PATH', 'CPLUS_INCLUDE_PATH', 'C_INCLUDE_PATH'))
   Sys.setenv(R_MAKEVARS_USER = makevars, R_MAKEVARS_SITE = '/dev/null', SDKROOT = sdk)
   message('Build tools: ', tools, '; gettext headers: ', gettext[1L])
-  makevars
+  return(makevars)
 }
 
 #' Restore locked packages into an isolated project library from CRAN sources.
@@ -87,7 +87,7 @@ restore_environment <- function(project = '.') {
                 normalizePath(file.path(library_path, name)))
   }
   cat('R packages restored. Set R_LIBS_USER to code/.renv/library before running R.\n')
-  invisible(library_path)
+  return(invisible(library_path))
 }
 
 restore_environment()

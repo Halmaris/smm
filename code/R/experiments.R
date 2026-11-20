@@ -3,10 +3,10 @@
 #' Return the fixed design of the completed multiclass ablation.
 #' @return Generator settings; calling this function generates no data and fits no model.
 paper_design <- function() {
-  list(seed = 20261107L, classes = c(3L, 5L), ranks = c(2L, 8L),
+  return(list(seed = 20261107L, classes = c(3L, 5L), ranks = c(2L, 8L),
     roughness = c('smooth', 'rough'), train_per_class = c(25L, 100L),
     p = 8L, T = 32L, noise_sd = .5, test_per_class = 1000L,
-    replications = 50L, folds = 5L)
+    replications = 50L, folds = 5L))
 }
 
 #' Enumerate the minimal additional experiments without running them.
@@ -21,7 +21,7 @@ additional_plan <- function(stage = 'core') {
   df$budget <- unname(c(M00 = 34L, M10 = 33L, M01 = 33L, M11 = 100L)[df$method])
   df$gamma_max <- if (stage == 'core') 1e4 else 1e5
   df$stage <- stage
-  df
+  return(df)
 }
 
 # Model selection and held-out assessment -------------------------------
@@ -31,8 +31,8 @@ additional_plan <- function(stage = 'core') {
 #' @return Method name; exact score ties retain the order M00, M10, M01.
 select_portfolio <- function(tuned) {
   methods <- c('M00', 'M10', 'M01')
-  scores <- vapply(tuned[methods], function(x) x$selection$score, 0)
-  methods[which.max(scores)]
+  scores <- vapply(tuned[methods], function(x) return(x$selection$score), 0)
+  return(methods[which.max(scores)])
 }
 
 #' Refit a frozen development choice and evaluate the held-out test observations.
@@ -46,7 +46,7 @@ assess_choice <- function(inputs, choice, fitter = fit_direct, predictor = predi
     choice$parameters))
   pred <- predictor(model, inputs$test$X)
   scores <- mc_metrics(inputs$test$y, pred)
-  list(BA = scores$BA, macro_F1 = scores$macro_F1, prediction = pred)
+  return(list(BA = scores$BA, macro_F1 = scores$macro_F1, prediction = pred))
 }
 
 # Experiment blocks -----------------------------------------------------
@@ -72,7 +72,7 @@ run_additional <- function(inputs, scenario, replication, seed, stage = 'core', 
     core$scenario == scenario, core$replication == replication, core$tpe_seed == seed,
     identical(core$input_identity, attr(inputs, 'identity')))
   tuned <- setNames(lapply(seq_len(nrow(rows)), function(i)
-    tuner(inputs$train, rows$method[i], seed, rows$budget[i], rows$gamma_max[i])), rows$method)
+    return(tuner(inputs$train, rows$method[i], seed, rows$budget[i], rows$gamma_max[i]))), rows$method)
   evaluations <- list(); refits <- 0L
   if (stage == 'core') {
     selected <- select_portfolio(tuned)
@@ -100,11 +100,11 @@ run_additional <- function(inputs, scenario, replication, seed, stage = 'core', 
         BA_difference = expanded$BA - baseline$BA,
         F1_difference = expanded$macro_F1 - baseline$macro_F1)
     }
-    comparison <- dplyr::bind_rows(comparison)
+    comparison <- bind_rows(comparison)
   }
-  list(stage = stage, scenario = scenario, replication = replication, tpe_seed = seed,
+  return(list(stage = stage, scenario = scenario, replication = replication, tpe_seed = seed,
     input_identity = attr(inputs, 'identity'), tuned = tuned, evaluations = evaluations,
-    comparison = comparison, refits = refits)
+    comparison = comparison, refits = refits))
 }
 
 #' Run one block of the original four-way direct multiclass ablation.
@@ -116,6 +116,6 @@ run_ablation <- function(inputs, seed) {
   stopifnot(length(seed) %in% c(1L, 4L))
   seed <- rep(seed, length.out = 4L)
   tuned <- setNames(lapply(seq_along(methods), function(i)
-    tune_direct(inputs$train, methods[i], seed[i], budget = 100L)), methods)
-  list(tuned = tuned, evaluations = lapply(tuned, function(x) assess_choice(inputs, x$selection)))
+    return(tune_direct(inputs$train, methods[i], seed[i], budget = 100L))), methods)
+  return(list(tuned = tuned, evaluations = lapply(tuned, function(x) return(assess_choice(inputs, x$selection)))))
 }

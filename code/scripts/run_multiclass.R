@@ -15,13 +15,13 @@ for (name in c('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'VE
 source(file.path(root, 'R/load.R'))
 smm <- load_smm(root)
 seeds <- vapply(11:14, function(stream)
-  smm$mc_seed(smm$paper_design(), scenario, replication, stream), integer(1))
+  return(smm$mc_seed(smm$paper_design(), scenario, replication, stream)), integer(1))
 result <- smm$run_ablation(inputs, seeds)
 dir.create(dirname(output), recursive = TRUE, showWarnings = FALSE)
 saveRDS(result, output)
 rows <- lapply(names(result$evaluations), function(method) {
   x <- result$evaluations[[method]]
-  data.frame(scenario = sprintf('s%02d', scenario), replication, method,
-    BA = x$BA, macro_F1 = x$macro_F1)
+  return(data.frame(scenario = sprintf('s%02d', scenario), replication, method,
+    BA = x$BA, macro_F1 = x$macro_F1))
 })
 write.csv(do.call(rbind, rows), sub('[.]rds$', '.csv', output), row.names = FALSE)

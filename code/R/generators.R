@@ -7,7 +7,7 @@ mc_plan <- function(cfg) {
     roughness = cfg$roughness, train_per_class = cfg$train_per_class,
     stringsAsFactors = FALSE)
   df$scenario <- sprintf('s%02d', seq_len(nrow(df)))
-  df
+  return(df)
 }
 
 #' Assign a deterministic RNG stream to one scenario, replication and generator step.
@@ -17,17 +17,17 @@ mc_plan <- function(cfg) {
 #' @param stream Independent generator stream index.
 mc_seed <- function(cfg, scenario, replication, stream) {
   # Disjoint deterministic streams; no dependence on execution order.
-  as.integer(cfg$seed + scenario * 100000L + replication * 100L + stream)
+  return(as.integer(cfg$seed + scenario * 100000L + replication * 100L + stream))
 }
 
 #' Construct temporal second differences on the unit-spaced grid.
 #' @param T Temporal grid length.
-mc_D <- function(T) diff(diag(T), differences = 2L)
+mc_D <- function(T) return(diff(diag(T), differences = 2L))
 
 #' Draw orthonormal columns using the current RNG stream.
 #' @param n Number of rows or observations.
 #' @param k Number of orthonormal columns.
-mc_orthogonal <- function(n, k) qr.Q(qr(matrix(rnorm(n * k), n, k)))[, seq_len(k), drop = FALSE]
+mc_orthogonal <- function(n, k) return(qr.Q(qr(matrix(rnorm(n * k), n, k)))[, seq_len(k), drop = FALSE])
 
 #' Construct equal-Gram class coefficients with controlled rank and roughness.
 #' @param cfg Generator settings from paper_design.
@@ -47,15 +47,15 @@ mc_coefficients <- function(cfg, job, replication, scenario) {
   E <- eigen(H, symmetric = TRUE)$vectors[, seq_len(K - 1L), drop = FALSE]
   A <- sqrt(K / (K - 1L)) * mc_orthogonal(r * r, K - 1L) %*% t(E)
   W <- vapply(seq_len(K), function(k)
-    as.vector(U %*% matrix(A[, k], r, r) %*% t(V)), numeric(cfg$p * cfg$T))
+    return(as.vector(U %*% matrix(A[, k], r, r) %*% t(V))), numeric(cfg$p * cfg$T))
   target <- (K / (K - 1L)) * H
   stopifnot(max(abs(crossprod(W) - target)) < 1e-10,
     max(abs(rowSums(W))) < 1e-10,
     all(vapply(seq_len(K), function(k)
-      qr(matrix(W[, k], cfg$p, cfg$T), tol = 1e-9)$rank, 0L) == r))
-  list(W = W, gram = crossprod(W),
+      return(qr(matrix(W[, k], cfg$p, cfg$T), tol = 1e-9)$rank), 0L) == r))
+  return(list(W = W, gram = crossprod(W),
     roughness = vapply(seq_len(K), function(k)
-      sum((matrix(W[, k], cfg$p, cfg$T) %*% t(mc_D(cfg$T)))^2), 0))
+      return(sum((matrix(W[, k], cfg$p, cfg$T) %*% t(mc_D(cfg$T)))^2)), 0)))
 }
 
 #' Sample observations with fixed class counts by conditional rejection.
@@ -85,9 +85,9 @@ mc_sample <- function(cfg, job, truth, per_class, seed, prefix) {
   }
   Z <- do.call(rbind, accepted); y <- rep(seq_len(K), each = per_class)
   order <- sample.int(length(y)); Z <- Z[order, , drop = FALSE]; y <- y[order]
-  list(X = lapply(seq_len(nrow(Z)), function(i) matrix(Z[i, ], cfg$p, cfg$T)),
+  return(list(X = lapply(seq_len(nrow(Z)), function(i) return(matrix(Z[i, ], cfg$p, cfg$T))),
     y = factor(y, levels = seq_len(K)), sample_id = paste0(prefix, seq_along(y)),
-    candidate_draws = draws, sampling = 'fixed class counts by conditional rejection')
+    candidate_draws = draws, sampling = 'fixed class counts by conditional rejection'))
 }
 
 #' Generate paired development/test samples and the fixed stratified folds.
@@ -109,7 +109,7 @@ mc_inputs <- function(cfg, job, replication, scenario) {
   }
   stopifnot(all(table(train$y, train$folds) > 0),
     !any(train$sample_id %in% test$sample_id))
-  list(train = train, test = test, truth = truth)
+  return(list(train = train, test = test, truth = truth))
 }
 
 # Population and sample summaries ---------------------------------------
@@ -122,8 +122,8 @@ mc_metrics <- function(y, pred) {
   stopifnot(length(pred) == length(y), !anyNA(pred), all(as.character(pred) %in% levels))
   cm <- table(factor(y, levels), factor(pred, levels)); tp <- diag(cm)
   f1 <- 2 * tp / (rowSums(cm) + colSums(cm))
-  list(BA = mean(tp / rowSums(cm)), macro_F1 = mean(f1),
-    recall = tp / rowSums(cm), confusion = cm)
+  return(list(BA = mean(tp / rowSums(cm)), macro_F1 = mean(f1),
+    recall = tp / rowSums(cm), confusion = cm))
 }
 
 #' Summarize coefficient effective ranks and scale-invariant temporal roughness.
@@ -133,13 +133,13 @@ mc_structure <- function(fit) {
   one <- function(w) {
     W <- matrix(w, fit$p, fit$q); s <- svd(W, nu = 0, nv = 0)$d
     energy <- sum(s^2)
-    c(effective_rank = if (energy > 0) sum(s)^2 / energy else 0,
-      relative_roughness = if (energy > 0) sum((W %*% t(D))^2) / energy else 0)
+    return(c(effective_rank = if (energy > 0) sum(s)^2 / energy else 0,
+      relative_roughness = if (energy > 0) sum((W %*% t(D))^2) / energy else 0))
   }
   pairs <- combn(ncol(fit$W), 2L)
-  list(classes = apply(fit$W, 2L, one), contrasts = vapply(seq_len(ncol(pairs)),
-    function(j) one(fit$W[, pairs[1L, j]] - fit$W[, pairs[2L, j]]), numeric(2)),
-    coordinates = 'training-standardized; scale invariant summaries, not coefficient recovery')
+  return(list(classes = apply(fit$W, 2L, one), contrasts = vapply(seq_len(ncol(pairs)),
+    function(j) return(one(fit$W[, pairs[1L, j]] - fit$W[, pairs[2L, j]])), numeric(2)),
+    coordinates = 'training-standardized; scale invariant summaries, not coefficient recovery'))
 }
 # Binary simulation design ----------------------------------------------
 
@@ -187,19 +187,19 @@ simulate_smm <- function(n_train, n_test = 2000L, p = 8L, T = 32L,
   # Reset after constructing W so paired scenarios use the same input matrices.
   set.seed(seed + 1L)
   X <- lapply(seq_len(n_train + n_test), function(i)
-    row_root %*% matrix(rnorm(p * T), p, T) %*% t(time_root))
-  eta <- vapply(X, function(x) sum(x * W), numeric(1))
+    return(row_root %*% matrix(rnorm(p * T), p, T) %*% t(time_root)))
+  eta <- vapply(X, function(x) return(sum(x * W)), numeric(1))
   probability <- plogis(eta)
   y <- ifelse(runif(length(X)) < probability, 1L, -1L)
   flip <- runif(length(X)) < label_flip
   y[flip] <- -y[flip]
   effective_probability <- label_flip + (1 - 2 * label_flip) * probability
   indices <- list(train = seq_len(n_train), test = n_train + seq_len(n_test))
-  samples <- lapply(indices, function(i) list(X = X[i], y = factor(y[i], levels = c(-1, 1)),
-    probability = effective_probability[i], linear_predictor = eta[i]))
-  c(samples, list(W = W, coefficient_shape = shape, D = D,
+  samples <- lapply(indices, function(i) return(list(X = X[i], y = factor(y[i], levels = c(-1, 1)),
+    probability = effective_probability[i], linear_predictor = eta[i])))
+  return(c(samples, list(W = W, coefficient_shape = shape, D = D,
     row_covariance = row_covariance, time_covariance = time_covariance,
     settings = list(n_train = n_train, n_test = n_test, p = p, T = T, rank = rank,
       roughness = roughness, correlation = correlation, label_flip = label_flip,
-      signal_sd = signal_sd, seed = seed, mixing = mixing)))
+      signal_sd = signal_sd, seed = seed, mixing = mixing))))
 }

@@ -1,4 +1,5 @@
 # Run from code/: Rscript --vanilla tests/test_saved_analysis.R. No model fitting.
+source('R/libraries.R')
 source('R/saved_analysis.R')
 x <- classification_metrics(c('a', 'a', 'b', 'b'), c('a', 'a', 'a', 'a'))
 stopifnot(abs(x$balanced_accuracy - .5) < 1e-12, abs(x$macro_f1 - 1/3) < 1e-12)
